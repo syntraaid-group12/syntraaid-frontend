@@ -4,4 +4,4 @@
 // or the live Railway URL once deployed.
 //   Local:  http://localhost:5000/api
 //   Live:   https://your-railway-url.railway.app/api
-window.API_BASE = "http://localhost:5000/api";
+window.API_BASE = "https://syntraaid-backend-production.up.railway.app/api";
