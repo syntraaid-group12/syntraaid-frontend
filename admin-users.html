@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Users - SyntraAid Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','system-ui','sans-serif']},colors:{brand:{green:'#2BB673',darkgreen:'#22A05B',lightgreen:'#F2FBF6'}}}}}</script>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');body{background:#f8f9fa;color:#111827;font-family:'Poppins',sans-serif}</style>
+</head>
+<body class="antialiased">
+  <div id="app"></div>
+  <script src="js/config.js"></script><script src="js/auth.js"></script>
+  <script src="js/api.js"></script><script src="js/layout.js"></script>
+  <script>
+    const content = `
+      <div class="mb-4 flex flex-wrap items-center gap-3">
+        <input id="search" type="search" placeholder="Search by email" class="px-4 py-2.5 rounded-xl bg-white border border-gray-100 text-[13px] flex-1 min-w-[180px] focus:outline-none focus:ring-1 focus:ring-brand-green">
+        <select id="roleFilter" class="px-4 py-2.5 rounded-xl bg-white border border-gray-100 text-[13px]">
+          <option value="">All roles</option>
+          <option value="admin">Admin</option>
+          <option value="coordinator">Coordinator</option>
+          <option value="volunteer">Volunteer</option>
+          <option value="donor">Donor</option>
+        </select>
+        <select id="stateFilter" class="px-4 py-2.5 rounded-xl bg-white border border-gray-100 text-[13px]">
+          <option value="">Active &amp; pending</option>
+          <option value="active">Active only</option>
+          <option value="pending">Pending only</option>
+        </select>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-[13px]">
+            <thead><tr class="text-left text-gray-400 border-b border-gray-100 bg-gray-50/50">
+              <th class="px-5 py-2.5 font-[600]">Email</th><th class="px-5 py-2.5 font-[600]">Role</th><th class="px-5 py-2.5 font-[600]">Status</th><th class="px-5 py-2.5 font-[600] text-right">Action</th>
+            </tr></thead>
+            <tbody id="rows"><tr><td colspan="4" class="px-5 py-4 text-gray-400">Loading users...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    `;
+    Layout.render({ role:"admin", active:"users", title:"User Management", subtitle:"View all users and activate or deactivate accounts.", content });
+
+    const ROLEBADGE={admin:'bg-purple-50 text-purple-600',coordinator:'bg-blue-50 text-blue-600',volunteer:'bg-[#E8F8F0] text-brand-green',donor:'bg-amber-50 text-amber-600'};
+    let all=[];
+
+    function render(){
+      const q=(Layout.el('search').value||'').toLowerCase();
+      const rf=Layout.el('roleFilter').value;
+      const sf=Layout.el('stateFilter').value;
+      let list=all.filter(u=>{
+        if(rf && u.role!==rf) return false;
+        if(sf==='active' && !u.isActive) return false;
+        if(sf==='pending' && u.isActive) return false;
+        if(q && !(u.email||'').toLowerCase().includes(q)) return false;
+        return true;
+      });
+      const rows=Layout.el('rows');
+      if(!list.length){ rows.innerHTML='<tr><td colspan="4" class="px-5 py-4 text-gray-400">No users match.</td></tr>'; return; }
+      rows.innerHTML=list.map(u=>{
+        const role='<span class="text-[11px] px-2 py-0.5 rounded-full '+(ROLEBADGE[u.role]||'bg-gray-100 text-gray-500')+' capitalize">'+Layout.esc(u.role)+'</span>';
+        const status=u.isActive?'<span class="text-[11px] px-2 py-0.5 rounded-full bg-[#E8F8F0] text-brand-green">Active</span>':'<span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">Pending</span>';
+        const btn=u.isActive
+          ? '<button class="toggle text-[12px] px-3 py-1.5 rounded-full border border-red-200 text-red-600 font-[700] hover:bg-red-50" data-id="'+u._id+'" data-active="true">Deactivate</button>'
+          : '<button class="toggle text-[12px] px-3 py-1.5 rounded-full bg-brand-green text-white font-[700] hover:bg-brand-darkgreen" data-id="'+u._id+'" data-active="false">Activate</button>';
+        return '<tr class="border-b border-gray-50"><td class="px-5 py-3">'+Layout.esc(u.email)+'</td><td class="px-5 py-3">'+role+'</td><td class="px-5 py-3">'+status+'</td><td class="px-5 py-3 text-right">'+btn+'</td></tr>';
+      }).join('');
+    }
+
+    async function load(){
+      try{ const res=await window.Api.get("/users"); all=res.data||[]; render(); }
+      catch(e){ Layout.el('rows').innerHTML='<tr><td colspan="4" class="px-5 py-4 text-red-500">'+Layout.esc(e.message)+'</td></tr>'; }
+    }
+    load();
+
+    document.addEventListener('input',e=>{ if(['search','roleFilter','stateFilter'].includes(e.target.id)) render(); });
+    document.addEventListener('change',e=>{ if(['roleFilter','stateFilter'].includes(e.target.id)) render(); });
+    document.addEventListener('click', async (e)=>{
+      const b=e.target.closest('.toggle'); if(!b)return;
+      const makeActive=b.dataset.active!=='true'; // if currently active, we deactivate
+      b.disabled=true; const t=b.textContent; b.textContent='...';
+      try{ await window.Api.patch("/users/"+b.dataset.id+"/activate",{isActive:makeActive}); await load(); }
+      catch(err){ alert('Could not update: '+err.message); b.disabled=false; b.textContent=t; }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Access Requests - SyntraAid Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','system-ui','sans-serif']},colors:{brand:{green:'#2BB673',darkgreen:'#22A05B',lightgreen:'#F2FBF6'}}}}}</script>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');body{background:#f8f9fa;color:#111827;font-family:'Poppins',sans-serif}</style>
+</head>
+<body class="antialiased">
+  <div id="app"></div>
+  <script src="js/config.js"></script><script src="js/auth.js"></script>
+  <script src="js/api.js"></script><script src="js/layout.js"></script>
+  <script>
+    const content = `
+      <div class="mb-4 flex flex-wrap items-center gap-3">
+        <select id="statusFilter" class="px-4 py-2.5 rounded-xl bg-white border border-gray-100 text-[13px]">
+          <option value="">All statuses</option>
+          <option value="new">New</option>
+          <option value="reviewed">Reviewed</option>
+          <option value="actioned">Actioned</option>
+        </select>
+        <span id="count" class="text-[12px] text-gray-400"></span>
+      </div>
+      <div id="list" class="space-y-3"><p class="text-[13px] text-gray-400">Loading requests...</p></div>
+    `;
+    Layout.render({ role:"admin", active:"requests", title:"Access Requests", subtitle:"People who reached out through the contact form.", content });
+
+    const STATUS={new:'bg-blue-50 text-blue-600',reviewed:'bg-amber-50 text-amber-600',actioned:'bg-[#E8F8F0] text-brand-green'};
+    const ROLE_MAP={'NGO Admin':'admin','Coordinator':'coordinator','Volunteer':'volunteer','Donor':'donor'};
+
+    function card(r){
+      const inviteRole = ROLE_MAP[r.role] || '';
+      const canInvite = !!inviteRole; // only role requests can be invited (not Inquiry/Feedback)
+      const when = r.submittedAt ? new Date(r.submittedAt).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}) : '';
+      return '<div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">'+
+        '<div class="flex items-start justify-between gap-3 flex-wrap">'+
+          '<div><p class="text-[14px] font-[700] text-gray-900">'+Layout.esc(r.name)+'</p>'+
+          '<p class="text-[12px] text-gray-500">'+Layout.esc(r.email)+' · '+Layout.esc(r.organizationName||'')+'</p></div>'+
+          '<div class="flex items-center gap-2">'+
+            (r.role?'<span class="text-[11px] px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">'+Layout.esc(r.role)+'</span>':'')+
+            '<span class="text-[11px] px-2.5 py-1 rounded-full '+(STATUS[r.status]||'bg-gray-100 text-gray-500')+' capitalize">'+Layout.esc(r.status||'new')+'</span>'+
+          '</div>'+
+        '</div>'+
+        (r.message?'<p class="text-[13px] text-gray-600 mt-3 bg-gray-50 rounded-xl px-4 py-3">'+Layout.esc(r.message)+'</p>':'')+
+        '<div class="flex items-center justify-between gap-3 mt-4 flex-wrap">'+
+          '<p class="text-[11px] text-gray-400">'+when+'</p>'+
+          '<div class="flex items-center gap-2">'+
+            (canInvite?'<a href="admin-invite.html?email='+encodeURIComponent(r.email)+'&role='+encodeURIComponent(inviteRole)+'" class="text-[12px] px-3 py-1.5 rounded-full bg-brand-green text-white font-[700] hover:bg-brand-darkgreen">Invite this person</a>':'')+
+            '<select data-id="'+r._id+'" class="status-sel text-[12px] border border-gray-200 rounded-lg px-2 py-1.5 bg-white">'+
+              ['new','reviewed','actioned'].map(s=>'<option value="'+s+'" '+(r.status===s?'selected':'')+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>').join('')+
+            '</select>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    }
+
+    async function load(){
+      const list=Layout.el('list');
+      list.innerHTML='<p class="text-[13px] text-gray-400">Loading requests...</p>';
+      const st=Layout.el('statusFilter').value;
+      try{
+        const res=await window.Api.get("/contact"+(st?("?status="+st):""));
+        const data=res.data||[];
+        Layout.el('count').textContent=(res.count||data.length)+' request(s)';
+        if(!data.length){ list.innerHTML='<p class="text-[13px] text-gray-400">No requests'+(st?' with this status':'')+' yet.</p>'; return; }
+        list.innerHTML=data.map(card).join('');
+      }catch(e){ list.innerHTML='<p class="text-[13px] text-red-500">'+Layout.esc(e.message)+'</p>'; }
+    }
+    load();
+
+    Layout.el('statusFilter').addEventListener('change', load);
+    document.addEventListener('change', async (e)=>{
+      if(!e.target.classList.contains('status-sel'))return;
+      try{ await window.Api.patch("/contact/"+e.target.dataset.id+"/status",{status:e.target.value}); load(); }
+      catch(err){ alert('Could not update status: '+err.message); load(); }
+    });
+  </script>
+</body>
+</html>

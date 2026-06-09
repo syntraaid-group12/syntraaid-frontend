@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Projects - SyntraAid Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: {
+      fontFamily: { sans: ['Poppins', 'system-ui', 'sans-serif'] },
+      colors: { brand: { green: '#2BB673', darkgreen: '#22A05B', lightgreen: '#F2FBF6' } } } } }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+    body { background:#f8f9fa; color:#111827; font-family:'Poppins',sans-serif; }
+    ::-webkit-scrollbar { width:5px; height:5px; } ::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:9999px; }
+  </style>
+</head>
+<body class="antialiased">
+  <div id="app"></div>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    const content = `
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
+        <div class="relative flex-1">
+          <span class="absolute inset-y-0 left-3 flex items-center text-gray-400"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></span>
+          <input id="search" type="search" placeholder="Search projects" class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-gray-100 text-[13px] focus:outline-none focus:ring-1 focus:ring-brand-green">
+        </div>
+        <select id="statusFilter" class="px-4 py-2.5 rounded-xl bg-white border border-gray-100 text-[13px] focus:outline-none focus:ring-1 focus:ring-brand-green">
+          <option value="">All statuses</option>
+          <option value="planning">Planning</option>
+          <option value="active">Active</option>
+          <option value="on_hold">On Hold</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        <a href="admin-project-create.html" class="px-5 py-2.5 rounded-full bg-brand-green text-white text-[13px] font-[700] text-center hover:bg-brand-darkgreen transition-colors">+ New Project</a>
+      </div>
+      <div id="grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <p class="text-[13px] text-gray-400">Loading projects...</p>
+      </div>
+    `;
+    Layout.render({ role:"admin", active:"projects", title:"Projects", subtitle:"All projects across the organisation.", content });
+
+    const STATUS_STYLE = {
+      planning:'bg-amber-50 text-amber-600', active:'bg-[#E8F8F0] text-brand-green',
+      on_hold:'bg-gray-100 text-gray-500', completed:'bg-blue-50 text-blue-600', cancelled:'bg-red-50 text-red-500'
+    };
+    let allProjects = [];
+
+    function render() {
+      const q = (Layout.el('search').value || '').toLowerCase();
+      const st = Layout.el('statusFilter').value;
+      const grid = Layout.el('grid');
+      let list = allProjects.filter(p =>
+        (!st || p.status === st) && (!q || (p.title||'').toLowerCase().includes(q))
+      );
+      if (!list.length) { grid.innerHTML = '<p class="text-[13px] text-gray-400">No projects match.</p>'; return; }
+      grid.innerHTML = list.map(p => {
+        const badge = STATUS_STYLE[p.status] || 'bg-gray-100 text-gray-500';
+        const vols = (p.volunteers && p.volunteers.length) || 0;
+        const ms = (p.milestones && p.milestones.length) || 0;
+        return '<a href="admin-project-detail.html?id=' + p._id + '" class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 block hover:shadow-md transition-shadow">' +
+          '<div class="flex items-start justify-between gap-2"><h3 class="text-[15px] font-[700] text-gray-900 leading-snug">' + Layout.esc(p.title) + '</h3>' +
+          '<span class="text-[10px] font-[600] px-2.5 py-1 rounded-full ' + badge + ' shrink-0">' + (p.status||'').replace(/_/g,' ') + '</span></div>' +
+          '<p class="text-[12px] text-gray-500 mt-2 line-clamp-2">' + Layout.esc(p.description || 'No description') + '</p>' +
+          '<div class="flex items-center gap-4 mt-4 text-[12px] text-gray-500"><span>' + vols + ' volunteers</span><span>' + ms + ' milestones</span></div>' +
+          '</a>';
+      }).join('');
+    }
+
+    (async function load() {
+      try {
+        const res = await window.Api.get("/projects");
+        allProjects = res.data || [];
+        render();
+      } catch (e) {
+        Layout.el('grid').innerHTML = '<p class="text-[13px] text-red-500">' + Layout.esc(e.message) + '</p>';
+      }
+    })();
+    document.addEventListener('input', (e) => { if (e.target.id === 'search' || e.target.id === 'statusFilter') render(); });
+  </script>
+</body>
+</html>

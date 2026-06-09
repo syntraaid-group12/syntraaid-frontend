@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donors - SyntraAid Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','system-ui','sans-serif']},colors:{brand:{green:'#2BB673',darkgreen:'#22A05B',lightgreen:'#F2FBF6'}}}}}</script>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');body{background:#f8f9fa;color:#111827;font-family:'Poppins',sans-serif}</style>
+</head>
+<body class="antialiased">
+  <div id="app"></div>
+  <script src="js/config.js"></script><script src="js/auth.js"></script>
+  <script src="js/api.js"></script><script src="js/layout.js"></script>
+  <script>
+    const content = `
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-5 py-3 border-b border-gray-100"><h2 class="text-[14px] font-[700]">Donors</h2></div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-[13px]">
+            <thead><tr class="text-left text-gray-400 border-b border-gray-100 bg-gray-50/50">
+              <th class="px-5 py-2.5 font-[600]">Email</th><th class="px-5 py-2.5 font-[600]">Status</th><th class="px-5 py-2.5 font-[600]">Linked Projects</th><th class="px-5 py-2.5 font-[600]"></th>
+            </tr></thead>
+            <tbody id="rows"><tr><td colspan="4" class="px-5 py-4 text-gray-400">Loading donors...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <p class="text-[11px] text-gray-400 mt-3">Visibility settings control what each donor can see per project. Donors never see volunteer personal contact details.</p>
+
+      <div id="panel" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/40" id="panelBg"></div>
+        <div class="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl p-6 overflow-y-auto">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-[16px] font-[700]" id="panelTitle">Donor</h3>
+            <button id="panelClose" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+          </div>
+
+          <div class="bg-brand-lightgreen border border-brand-green/30 rounded-xl p-4 mb-5">
+            <h4 class="text-[13px] font-[700] mb-2">Link to a project</h4>
+            <div id="linkMsg" class="hidden mb-2 rounded-lg px-3 py-2 text-[12px]"></div>
+            <div class="flex gap-2">
+              <select id="linkProject" class="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-[13px] bg-white"><option value="">Select a project...</option></select>
+              <button id="linkBtn" class="px-4 py-2 rounded-full bg-brand-green text-white text-[12px] font-[700] hover:bg-brand-darkgreen">Link</button>
+            </div>
+          </div>
+
+          <div id="panelBody"><p class="text-[13px] text-gray-400">Loading...</p></div>
+        </div>
+      </div>
+    `;
+    Layout.render({ role:"admin", active:"donors", title:"Donor Management", subtitle:"Manage donors and their project visibility.", content });
+
+    let donors=[], projects=[];
+    async function load(){
+      try{
+        const res=await window.Api.get("/donors");donors=res.data||[];
+        try{ const rp=await window.Api.get("/projects"); projects=rp.data||[]; }catch(e){}
+        const rows=Layout.el('rows');
+        if(!donors.length){rows.innerHTML='<tr><td colspan="4" class="px-5 py-4 text-gray-400">No donors yet.</td></tr>';return;}
+        const enriched=await Promise.all(donors.map(async d=>{
+          let count=0; try{const r=await window.Api.get("/donors/"+d._id+"/projects");count=(r.data||[]).length;}catch(e){}
+          return {d,count};
+        }));
+        rows.innerHTML=enriched.map(({d,count})=>{
+          const st=d.isActive?'<span class="text-[11px] px-2 py-0.5 rounded-full bg-[#E8F8F0] text-brand-green">Active</span>':'<span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">Pending</span>';
+          return '<tr class="border-b border-gray-50"><td class="px-5 py-2.5">'+Layout.esc(d.email)+'</td><td class="px-5 py-2.5">'+st+'</td><td class="px-5 py-2.5">'+count+'</td><td class="px-5 py-2.5 text-right"><button class="text-[12px] text-brand-green font-[700] manage" data-id="'+d._id+'" data-email="'+Layout.esc(d.email)+'">Manage</button></td></tr>';
+        }).join('');
+      }catch(e){Layout.el('rows').innerHTML='<tr><td colspan="4" class="px-5 py-4 text-red-500">'+Layout.esc(e.message)+'</td></tr>';}
+    }
+    load();
+
+    const panel=Layout.el('panel');
+    function closePanel(){panel.classList.add('hidden');}
+    Layout.el('panelClose').addEventListener('click',closePanel);
+    Layout.el('panelBg').addEventListener('click',closePanel);
+
+    async function openPanel(donorId,email){
+      panel.dataset.donorId=donorId;
+      Layout.el('panelTitle').textContent=email;
+      panel.classList.remove('hidden');
+      // populate project dropdown
+      const sel=Layout.el('linkProject');
+      sel.innerHTML='<option value="">Select a project...</option>'+projects.map(p=>'<option value="'+p._id+'">'+Layout.esc(p.title)+'</option>').join('');
+      await renderLinks(donorId);
+    }
+
+    async function renderLinks(donorId){
+      const body=Layout.el('panelBody');
+      body.innerHTML='<p class="text-[13px] text-gray-400">Loading linked projects...</p>';
+      try{
+        const r=await window.Api.get("/donors/"+donorId+"/projects");
+        const links=r.data||[];
+        if(!links.length){ body.innerHTML='<p class="text-[13px] text-gray-500">Not linked to any projects yet. Use the box above to link one.</p>'; return; }
+        const titleFor=(pid)=>{const p=projects.find(x=>String(x._id)===String(pid));return p?p.title:pid;};
+        body.innerHTML='<h4 class="text-[13px] font-[700] mb-2">Linked projects &amp; visibility</h4>'+links.map(l=>{
+          const v=l.visibilitySettings||{};
+          const row=(key,label)=>'<label class="flex items-center justify-between py-1.5 text-[13px]"><span class="text-gray-600">'+label+'</span><input type="checkbox" class="vis w-4 h-4 accent-[#2BB673]" data-project="'+l.projectId+'" data-key="'+key+'" '+(v[key]?'checked':'')+'></label>';
+          return '<div class="border border-gray-100 rounded-xl p-4 mb-3"><p class="text-[13px] font-[700] mb-2">'+Layout.esc(titleFor(l.projectId))+'</p>'+
+            row('showMilestoneProgress','Milestone progress')+row('showVolunteerCount','Volunteer count')+row('showAttendanceHours','Attendance hours')+row('showActivityFeed','Activity feed')+row('showProgramHealth','Program health')+'</div>';
+        }).join('');
+      }catch(e){ body.innerHTML='<p class="text-[13px] text-red-500">'+Layout.esc(e.message)+'</p>'; }
+    }
+
+    // Link button
+    Layout.el('linkBtn').addEventListener('click', async ()=>{
+      const donorId=panel.dataset.donorId;
+      const projectId=Layout.el('linkProject').value;
+      const msg=Layout.el('linkMsg'); const show=(m,ok)=>{msg.textContent=m;msg.className='mb-2 rounded-lg px-3 py-2 text-[12px] '+(ok?'bg-[#E8F8F0] text-brand-darkgreen':'bg-red-50 text-red-700');};
+      if(!projectId){show('Select a project first.',false);return;}
+      try{
+        await window.Api.post("/donors/"+donorId+"/projects",{projectId,visibilitySettings:{showMilestoneProgress:true,showVolunteerCount:true,showAttendanceHours:true,showActivityFeed:true,showProgramHealth:true}});
+        show('Project linked.',true);
+        await renderLinks(donorId);
+        load();
+      }catch(e){ show(e.message||'Could not link.',false); }
+    });
+
+    // Manage buttons
+    document.addEventListener('click',(e)=>{const b=e.target.closest('.manage');if(b)openPanel(b.dataset.id,b.dataset.email);});
+
+    // Save visibility toggle on change
+    document.addEventListener('change', async (e)=>{
+      if(!e.target.classList.contains('vis'))return;
+      const donorId=panel.dataset.donorId, projectId=e.target.dataset.project;
+      const settings={};
+      document.querySelectorAll('.vis[data-project="'+projectId+'"]').forEach(cb=>{settings[cb.dataset.key]=cb.checked;});
+      try{ await window.Api.put("/donors/"+donorId+"/projects/"+projectId,{visibilitySettings:settings}); }
+      catch(err){ alert('Could not save: '+err.message); }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Project - SyntraAid Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: {
+      fontFamily: { sans: ['Poppins', 'system-ui', 'sans-serif'] },
+      colors: { brand: { green: '#2BB673', darkgreen: '#22A05B', lightgreen: '#F2FBF6' } } } } }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+    body { background:#f8f9fa; color:#111827; font-family:'Poppins',sans-serif; }
+    .fi { width:100%; background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:12px 14px; font-size:14px; }
+    .fi:focus { outline:none; border-color:#2BB673; box-shadow:0 0 0 3px rgba(43,182,115,.12); }
+  </style>
+</head>
+<body class="antialiased">
+  <div id="app"></div>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    const content = `
+      <div class="max-w-2xl">
+        <div id="okBox" class="hidden mb-4 rounded-xl bg-[#E8F8F0] text-brand-darkgreen px-4 py-3 text-[13px] font-medium"></div>
+        <div id="errBox" class="hidden mb-4 rounded-xl bg-red-50 text-red-700 px-4 py-3 text-[13px] font-medium"></div>
+
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-5">
+          <div>
+            <label class="block text-[13px] font-[700] text-gray-900 mb-1.5">Project Title *</label>
+            <input id="title" type="text" class="fi" placeholder="e.g. Community Literacy Programme">
+          </div>
+          <div>
+            <label class="block text-[13px] font-[700] text-gray-900 mb-1.5">Description</label>
+            <textarea id="description" rows="3" class="fi" placeholder="What is this project about?"></textarea>
+          </div>
+          <div>
+            <label class="block text-[13px] font-[700] text-gray-900 mb-1.5">Goals</label>
+            <textarea id="goals" rows="2" class="fi" placeholder="What does success look like?"></textarea>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[13px] font-[700] text-gray-900 mb-1.5">Start Date</label>
+              <input id="startDate" type="date" class="fi">
+            </div>
+            <div>
+              <label class="block text-[13px] font-[700] text-gray-900 mb-1.5">End Date</label>
+              <input id="endDate" type="date" class="fi">
+            </div>
+          </div>
+          <div>
+            <label class="block text-[13px] font-[700] text-gray-900 mb-1.5">Coordinator</label>
+            <select id="coordinatorId" class="fi">
+              <option value="">Unassigned (cannot activate until assigned)</option>
+            </select>
+            <p class="text-[11px] text-gray-400 mt-1">A project cannot be activated without a coordinator.</p>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label class="block text-[13px] font-[700] text-gray-900">Milestones</label>
+              <button id="addMs" type="button" class="text-[12px] text-brand-green font-[700]">+ Add milestone</button>
+            </div>
+            <div id="msList" class="space-y-2"></div>
+          </div>
+
+          <div class="flex gap-3 pt-2">
+            <button id="saveBtn" type="button" class="px-6 py-3 rounded-full bg-brand-green text-white text-[14px] font-[700] hover:bg-brand-darkgreen transition-colors">Create Project</button>
+            <a href="admin-projects.html" class="px-6 py-3 rounded-full border border-gray-200 text-gray-700 text-[14px] font-[600] hover:bg-gray-50 transition-colors">Cancel</a>
+          </div>
+        </div>
+      </div>
+    `;
+    Layout.render({ role:"admin", active:"projects", title:"Create Project", subtitle:"Set up a new project with milestones.", content });
+
+    const ok = Layout.el('okBox'), err = Layout.el('errBox');
+    const showOk = m => { ok.textContent = m; ok.classList.remove('hidden'); };
+    const showErr = m => { err.textContent = m; err.classList.remove('hidden'); };
+
+    // milestone rows
+    function addMilestone(title='', dueDate='') {
+      const row = document.createElement('div');
+      row.className = 'flex gap-2 items-center';
+      row.innerHTML = '<input type="text" class="fi ms-title" placeholder="Milestone title" value="' + Layout.esc(title) + '">' +
+        '<input type="date" class="fi ms-due" style="max-width:160px" value="' + Layout.esc(dueDate) + '">' +
+        '<button type="button" class="text-red-400 hover:text-red-600 px-2 ms-del">&times;</button>';
+      row.querySelector('.ms-del').addEventListener('click', () => row.remove());
+      Layout.el('msList').appendChild(row);
+    }
+    Layout.el('addMs').addEventListener('click', () => addMilestone());
+    addMilestone();
+
+    // Load coordinators for the dropdown (users with coordinator role)
+    (async function loadCoordinators() {
+      try {
+        const res = await window.Api.get("/users");
+        const sel = Layout.el('coordinatorId');
+        (res.data || []).filter(u => u.role === 'coordinator').forEach(u => {
+          const o = document.createElement('option'); o.value = u._id; o.textContent = u.email; sel.appendChild(o);
+        });
+      } catch (e) { /* admin may still create unassigned */ }
+    })();
+
+    Layout.el('saveBtn').addEventListener('click', async () => {
+      ok.classList.add('hidden'); err.classList.add('hidden');
+      const title = Layout.el('title').value.trim();
+      if (!title) { showErr('Project title is required.'); return; }
+      const milestones = Array.prototype.map.call(document.querySelectorAll('#msList > div'), row => {
+        const t = row.querySelector('.ms-title').value.trim();
+        const d = row.querySelector('.ms-due').value;
+        return t ? { title: t, dueDate: d || undefined } : null;
+      }).filter(Boolean);
+
+      const payload = {
+        title,
+        description: Layout.el('description').value.trim(),
+        goals: Layout.el('goals').value.trim(),
+        startDate: Layout.el('startDate').value || undefined,
+        endDate: Layout.el('endDate').value || undefined,
+        coordinatorId: Layout.el('coordinatorId').value || undefined,
+        milestones,
+      };
+      const btn = Layout.el('saveBtn'); btn.disabled = true; const t = btn.textContent; btn.textContent = 'Creating...';
+      try {
+        const res = await window.Api.post("/projects", payload);
+        showOk('Project created. Redirecting...');
+        const id = res.data && res.data._id;
+        setTimeout(() => window.location.href = id ? ('admin-project-detail.html?id=' + id) : 'admin-projects.html', 1200);
+      } catch (e) {
+        showErr(e.message || 'Could not create project.');
+      } finally { btn.disabled = false; btn.textContent = t; }
+    });
+  </script>
+</body>
+</html>

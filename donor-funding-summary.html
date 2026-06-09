@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio Summary - SyntraAid Donor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','system-ui','sans-serif']},colors:{brand:{green:'#2BB673',darkgreen:'#22A05B',lightgreen:'#F2FBF6'}}}}}</script>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');body{background:#f8f9fa;color:#111827;font-family:'Poppins',sans-serif}</style>
+</head>
+<body class="antialiased">
+  <div id="app"></div>
+  <script src="js/config.js"></script><script src="js/auth.js"></script>
+  <script src="js/api.js"></script><script src="js/layout.js"></script>
+  <script>
+    const content = `
+      <div id="health-cards" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6"></div>
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <h2 class="text-[15px] font-[700] mb-4">Project Comparison</h2>
+        <div id="compare"><p class="text-[13px] text-gray-400">Loading...</p></div>
+      </div>
+    `;
+    Layout.render({ role:"donor", active:"projects", title:"Portfolio Summary", subtitle:"Health across all projects you fund.", content });
+    const user=window.Auth.getUser()||{};
+    const HEALTH={on_track:'bg-[#E8F8F0] text-brand-green',at_risk:'bg-amber-50 text-amber-600',needs_attention:'bg-red-50 text-red-500',completed:'bg-blue-50 text-blue-600'};
+    (async function(){
+      try{
+        const res=await window.Api.get("/donors/"+user._id+"/dashboard");
+        const projects=(res.data&&res.data.projects)||[];
+        const tally={on_track:0,at_risk:0,needs_attention:0,completed:0};
+        projects.forEach(p=>{const h=p.programHealthStatus||'on_track';if(tally[h]!=null)tally[h]++;});
+        const cards=[['on_track','On Track','text-brand-green'],['at_risk','At Risk','text-amber-600'],['needs_attention','Needs Attention','text-red-500'],['completed','Completed','text-blue-600']];
+        Layout.el('health-cards').innerHTML=cards.map(([k,label,cls])=>'<div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100"><p class="text-[11px] font-[600] text-gray-500 uppercase tracking-wide mb-2">'+label+'</p><p class="text-[28px] font-[800] '+cls+'">'+tally[k]+'</p></div>').join('');
+
+        const cmp=Layout.el('compare');
+        if(!projects.length){cmp.innerHTML='<p class="text-[13px] text-gray-400">No funded projects.</p>';return;}
+        const maxH=Math.max.apply(null,projects.map(p=>p.totalHoursLogged||0))||1;
+        cmp.innerHTML=projects.map(p=>{const h=p.programHealthStatus||'on_track';const hrs=p.totalHoursLogged||0;const w=Math.round(hrs/maxH*100);
+          return '<div class="mb-4"><div class="flex items-center justify-between mb-1"><span class="text-[13px] font-[600] text-gray-800">'+Layout.esc(p.title)+'</span><span class="text-[11px] px-2 py-0.5 rounded-full '+(HEALTH[h]||'')+' capitalize">'+h.replace(/_/g,' ')+'</span></div><div class="flex items-center gap-2"><div class="flex-1 bg-gray-100 rounded-full h-2.5"><div class="bg-brand-green h-2.5 rounded-full" style="width:'+w+'%"></div></div><span class="text-[11px] text-gray-500 w-14 text-right">'+hrs+'h</span></div></div>';
+        }).join('');
+      }catch(e){Layout.el('compare').innerHTML='<p class="text-[13px] text-red-500">'+Layout.esc(e.message)+'</p>';}
+    })();
+  </script>
+</body>
+</html>

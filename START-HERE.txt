@@ -1,0 +1,30 @@
+SyntraAid Frontend - Complete Package
+=====================================
+
+WHAT IS IN THIS FOLDER
+- All .html pages sit in this main folder (they link to each other by name).
+- js/      : the JavaScript that makes pages work (config, auth, api, layout)
+- images/  : logo and pictures used by the pages
+- (No css/ folder: styling uses Tailwind loaded inside each page, plus small
+   inline styles. There is no separate stylesheet to add.)
+
+IMPORTANT: keep all the .html files together in this main folder. They link to
+each other using plain names (e.g. home.html), so moving them into subfolders
+would break those links.
+
+TO SET THE BACKEND ADDRESS
+Open js/config.js and set the one line:
+  window.API_BASE = "http://localhost:5000/api";   (local testing)
+  window.API_BASE = "https://YOUR-RAILWAY-URL/api"; (once deployed)
+
+TO RUN/VIEW IT
+Do NOT double-click the html files. Serve the folder:
+  - In VS Code, install the "Live Server" extension,
+    then right-click home.html and choose "Open with Live Server".
+The contact form and all logged-in pages need the backend running to load data.
+
+PAGES INCLUDED
+Public: home, about, features, contact, privacy, 404
+Auth:   onboarding-login, onboarding-signup, forgot-password, resetpassword,
+        Accountpending, onboarding-intro, onboardingmain
+Admin (13), Coordinator (4), Volunteer (7), Donor (5) dashboards and sub-pages.

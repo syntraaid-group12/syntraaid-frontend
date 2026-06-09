@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Detail - SyntraAid Volunteer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','system-ui','sans-serif']},colors:{brand:{green:'#2BB673',darkgreen:'#22A05B',lightgreen:'#F2FBF6'}}}}}</script>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');body{background:#f8f9fa;color:#111827;font-family:'Poppins',sans-serif}</style>
+</head>
+<body class="antialiased">
+  <div id="app"></div>
+  <script src="js/config.js"></script><script src="js/auth.js"></script>
+  <script src="js/api.js"></script><script src="js/layout.js"></script>
+  <script>
+    const taskId=new URLSearchParams(location.search).get('id');
+    const content = `<div id="wrap"><p class="text-[13px] text-gray-400">Loading task...</p></div>`;
+    Layout.render({ role:"volunteer", active:"tasks", title:"Task Detail", subtitle:"", content });
+
+    const BADGE={not_started:'bg-gray-100 text-gray-500',in_progress:'bg-blue-50 text-blue-600',blocked:'bg-amber-50 text-amber-600',completed:'bg-[#E8F8F0] text-brand-green'};
+    if(!taskId){Layout.el('wrap').innerHTML='<p class="text-[13px] text-red-500">No task id provided.</p>';}
+
+    async function loadTask(){
+      try{
+        const res=await window.Api.get("/tasks/"+taskId);
+        const t=res.data||{};
+        Layout.el('wrap').innerHTML=
+          '<div class="max-w-2xl"><div id="okBox" class="hidden mb-4 rounded-xl bg-[#E8F8F0] text-brand-darkgreen px-4 py-3 text-[13px]"></div><div id="errBox" class="hidden mb-4 rounded-xl bg-red-50 text-red-700 px-4 py-3 text-[13px]"></div>'+
+          '<div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">'+
+          '<div class="flex items-start justify-between gap-3"><h2 class="text-[18px] font-[800]">'+Layout.esc(t.title)+'</h2><span class="text-[11px] px-2.5 py-1 rounded-full '+(BADGE[t.status]||'')+' capitalize shrink-0">'+(t.status||'').replace(/_/g,' ')+'</span></div>'+
+          '<p class="text-[13px] text-gray-600 mt-3">'+Layout.esc(t.description||'No description provided.')+'</p>'+
+          '<p class="text-[12px] text-gray-400 mt-3">'+(t.dueDate?('Due '+new Date(t.dueDate).toLocaleDateString()):'No due date')+'</p>'+
+          '<div class="border-t border-gray-100 mt-5 pt-5"><label class="block text-[13px] font-[700] mb-2">Update Status</label>'+
+          '<div class="flex flex-wrap gap-2">'+
+          '<button data-s="in_progress" class="st px-4 py-2 rounded-full text-[12px] font-[600] border border-gray-200 hover:border-brand-green">Start (In Progress)</button>'+
+          '<button data-s="blocked" class="st px-4 py-2 rounded-full text-[12px] font-[600] border border-amber-200 text-amber-600 hover:bg-amber-50">Report Blocked</button>'+
+          '<button data-s="completed" class="st px-4 py-2 rounded-full text-[12px] font-[600] bg-brand-green text-white hover:bg-brand-darkgreen">Mark Complete</button>'+
+          '</div><p class="text-[11px] text-gray-400 mt-2">Reporting a task blocked notifies your coordinator.</p></div></div></div>';
+
+        document.querySelectorAll('.st').forEach(btn=>btn.addEventListener('click', async ()=>{
+          const ok=Layout.el('okBox'),err=Layout.el('errBox');ok.classList.add('hidden');err.classList.add('hidden');
+          try{await window.Api.patch("/tasks/"+taskId+"/status",{status:btn.dataset.s});ok.textContent='Status updated to '+btn.dataset.s.replace(/_/g,' ')+'.';ok.classList.remove('hidden');loadTask();}
+          catch(e){err.textContent=e.message||'Could not update status.';err.classList.remove('hidden');}
+        }));
+      }catch(e){Layout.el('wrap').innerHTML='<p class="text-[13px] text-red-500">'+Layout.esc(e.message)+'</p>';}
+    }
+    if(taskId)loadTask();
+  </script>
+</body>
+</html>

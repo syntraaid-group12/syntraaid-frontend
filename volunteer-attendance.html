@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance - SyntraAid Volunteer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','system-ui','sans-serif']},colors:{brand:{green:'#2BB673',darkgreen:'#22A05B',lightgreen:'#F2FBF6'}}}}}</script>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');body{background:#f8f9fa;color:#111827;font-family:'Poppins',sans-serif}.fi{width:100%;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:10px 14px;font-size:13px}.fi:focus{outline:none;border-color:#2BB673;box-shadow:0 0 0 3px rgba(43,182,115,.12)}</style>
+</head>
+<body class="antialiased">
+  <div id="app"></div>
+  <script src="js/config.js"></script><script src="js/auth.js"></script>
+  <script src="js/api.js"></script><script src="js/layout.js"></script>
+  <script>
+    const content = `
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div class="lg:col-span-1 bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-4">
+          <h2 class="text-[15px] font-[700]">Log My Attendance</h2>
+          <div id="okBox" class="hidden rounded-xl bg-[#E8F8F0] text-brand-darkgreen px-4 py-3 text-[13px]"></div>
+          <div id="errBox" class="hidden rounded-xl bg-red-50 text-red-700 px-4 py-3 text-[13px]"></div>
+          <div><label class="block text-[13px] font-[700] mb-1.5">Project</label><select id="projectId" class="fi"><option value="">Select project</option></select></div>
+          <div><label class="block text-[13px] font-[700] mb-1.5">Session Date</label><input id="sessionDate" type="date" class="fi"></div>
+          <div><label class="block text-[13px] font-[700] mb-1.5">Hours</label><input id="hoursLogged" type="number" min="0.5" step="0.5" class="fi" placeholder="e.g. 3"></div>
+          <div><label class="block text-[13px] font-[700] mb-1.5">Notes (optional)</label><input id="notes" class="fi" placeholder="What did you work on?"></div>
+          <button id="logBtn" type="button" class="w-full py-3 rounded-full bg-brand-green text-white text-[14px] font-[700] hover:bg-brand-darkgreen transition-colors">Log Attendance</button>
+        </div>
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="px-5 py-3 border-b border-gray-100 flex items-center justify-between"><h2 class="text-[14px] font-[700]">My Attendance History</h2><span class="text-[12px] text-gray-500">Total: <span id="total" class="font-[700] text-brand-green">0h</span></span></div>
+          <div class="overflow-x-auto"><table class="w-full text-[13px]"><thead><tr class="text-left text-gray-400 border-b border-gray-100 bg-gray-50/50"><th class="px-5 py-2.5 font-[600]">Date</th><th class="px-5 py-2.5 font-[600]">Project</th><th class="px-5 py-2.5 font-[600]">Hours</th><th class="px-5 py-2.5 font-[600]">Notes</th></tr></thead><tbody id="rows"><tr><td colspan="4" class="px-5 py-4 text-gray-400">Loading...</td></tr></tbody></table></div>
+        </div>
+      </div>
+      <p class="text-[11px] text-gray-400 mt-3">Attendance is insert-only. Once logged it cannot be edited or deleted.</p>
+    `;
+    Layout.render({ role:"volunteer", active:"attendance", title:"Attendance", subtitle:"Log your hours and see your history.", content });
+
+    const user=window.Auth.getUser()||{};
+    const ok=Layout.el('okBox'),err=Layout.el('errBox');
+    (async function projs(){try{const res=await window.Api.get("/volunteers/"+user._id+"/dashboard");const sel=Layout.el('projectId');(res.data&&res.data.projects||[]).forEach(p=>{const o=document.createElement('option');o.value=p._id;o.textContent=p.title;sel.appendChild(o);});}catch(e){}})();
+    async function loadRows(){
+      try{const res=await window.Api.get("/volunteers/"+user._id+"/attendance");const list=res.data||[];Layout.el('total').textContent=(res.totalHoursLogged||0)+'h';
+        Layout.el('rows').innerHTML=list.length?list.map(a=>'<tr class="border-b border-gray-50"><td class="px-5 py-2.5">'+new Date(a.sessionDate).toLocaleDateString()+'</td><td class="px-5 py-2.5 text-gray-500">'+Layout.esc(a.projectId)+'</td><td class="px-5 py-2.5 font-[600]">'+a.hoursLogged+'h</td><td class="px-5 py-2.5 text-gray-500">'+Layout.esc(a.notes||'')+'</td></tr>').join(''):'<tr><td colspan="4" class="px-5 py-4 text-gray-400">No attendance yet.</td></tr>';
+      }catch(e){Layout.el('rows').innerHTML='<tr><td colspan="4" class="px-5 py-4 text-red-500">'+Layout.esc(e.message)+'</td></tr>';}
+    }
+    loadRows();
+    Layout.el('logBtn').addEventListener('click', async ()=>{
+      ok.classList.add('hidden');err.classList.add('hidden');
+      const payload={volunteerId:user._id,projectId:Layout.el('projectId').value,sessionDate:Layout.el('sessionDate').value,hoursLogged:parseFloat(Layout.el('hoursLogged').value),notes:Layout.el('notes').value.trim()};
+      if(!payload.projectId||!payload.sessionDate||!payload.hoursLogged){err.textContent='Project, date and hours are required.';err.classList.remove('hidden');return;}
+      const btn=Layout.el('logBtn');btn.disabled=true;const t=btn.textContent;btn.textContent='Logging...';
+      try{await window.Api.post("/attendance",payload);ok.textContent='Attendance logged.';ok.classList.remove('hidden');Layout.el('hoursLogged').value='';Layout.el('notes').value='';loadRows();}
+      catch(e){err.textContent=e.message||'Could not log attendance.';err.classList.remove('hidden');}
+      finally{btn.disabled=false;btn.textContent=t;}
+    });
+  </script>
+</body>
+</html>

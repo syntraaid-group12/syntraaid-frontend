@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Projects - SyntraAid Coordinator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','system-ui','sans-serif']},colors:{brand:{green:'#2BB673',darkgreen:'#22A05B',lightgreen:'#F2FBF6'}}}}}</script>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');body{background:#f8f9fa;color:#111827;font-family:'Poppins',sans-serif}</style>
+</head>
+<body class="antialiased">
+  <div id="app"></div>
+  <script src="js/config.js"></script><script src="js/auth.js"></script>
+  <script src="js/api.js"></script><script src="js/layout.js"></script>
+  <script>
+    const content = `
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
+        <div class="relative flex-1">
+          <span class="absolute inset-y-0 left-3 flex items-center text-gray-400"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></span>
+          <input id="search" type="search" placeholder="Search projects" class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-gray-100 text-[13px] focus:outline-none focus:ring-1 focus:ring-brand-green">
+        </div>
+        <select id="statusFilter" class="px-4 py-2.5 rounded-xl bg-white border border-gray-100 text-[13px]">
+          <option value="">All statuses</option><option value="planning">Planning</option><option value="active">Active</option><option value="on_hold">On Hold</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+      <div id="grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"><p class="text-[13px] text-gray-400">Loading projects...</p></div>
+    `;
+    Layout.render({ role:"coordinator", active:"projects", title:"My Projects", subtitle:"Projects you coordinate.", content });
+
+    const HEALTH={on_track:'bg-[#E8F8F0] text-brand-green',at_risk:'bg-amber-50 text-amber-600',needs_attention:'bg-red-50 text-red-500',completed:'bg-blue-50 text-blue-600'};
+    let all=[];
+    function render(){
+      const q=(Layout.el('search').value||'').toLowerCase();const st=Layout.el('statusFilter').value;
+      let list=all.filter(p=>(!st||p.status===st)&&(!q||(p.title||'').toLowerCase().includes(q)));
+      const grid=Layout.el('grid');
+      if(!list.length){grid.innerHTML='<p class="text-[13px] text-gray-400">No projects match.</p>';return;}
+      grid.innerHTML=list.map(p=>{const h=p.programHealthStatus||'on_track';const tc=p.taskCount||0,cc=p.completedTaskCount||0;
+        return '<div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100"><div class="flex items-start justify-between gap-2"><h3 class="text-[15px] font-[700] leading-snug">'+Layout.esc(p.title)+'</h3><span class="text-[10px] px-2 py-0.5 rounded-full '+(HEALTH[h]||'')+' capitalize shrink-0">'+h.replace(/_/g,' ')+'</span></div>'+
+        '<p class="text-[12px] text-gray-500 mt-2">'+(p.status||'').replace(/_/g,' ')+'</p>'+
+        '<div class="mt-3"><div class="flex justify-between text-[11px] text-gray-500 mb-1"><span>Tasks</span><span>'+cc+'/'+tc+'</span></div><div class="w-full bg-gray-100 rounded-full h-2"><div class="bg-brand-green h-2 rounded-full" style="width:'+(tc?Math.round(cc/tc*100):0)+'%"></div></div></div></div>';
+      }).join('');
+    }
+    (async function(){
+      try{const res=await window.Api.get("/coordinator/projects");all=res.data||[];render();}
+      catch(e){Layout.el('grid').innerHTML='<p class="text-[13px] text-red-500">'+Layout.esc(e.message)+'</p>';}
+    })();
+    document.addEventListener('input',e=>{if(['search','statusFilter'].includes(e.target.id))render();});
+  </script>
+</body>
+</html>

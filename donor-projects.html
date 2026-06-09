@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Projects - SyntraAid Donor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','system-ui','sans-serif']},colors:{brand:{green:'#2BB673',darkgreen:'#22A05B',lightgreen:'#F2FBF6'}}}}}</script>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');body{background:#f8f9fa;color:#111827;font-family:'Poppins',sans-serif}</style>
+</head>
+<body class="antialiased">
+  <div id="app"></div>
+  <script src="js/config.js"></script><script src="js/auth.js"></script>
+  <script src="js/api.js"></script><script src="js/layout.js"></script>
+  <script>
+    const content = `<div id="grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"><p class="text-[13px] text-gray-400">Loading projects...</p></div>`;
+    Layout.render({ role:"donor", active:"projects", title:"My Projects", subtitle:"Projects you support.", content });
+    const user=window.Auth.getUser()||{};
+    const HEALTH={on_track:'bg-[#E8F8F0] text-brand-green',at_risk:'bg-amber-50 text-amber-600',needs_attention:'bg-red-50 text-red-500',completed:'bg-blue-50 text-blue-600'};
+    (async function(){
+      try{
+        const res=await window.Api.get("/donors/"+user._id+"/dashboard");
+        const projects=(res.data&&res.data.projects)||[];
+        const grid=Layout.el('grid');
+        if(!projects.length){grid.innerHTML='<p class="text-[13px] text-gray-400">No funded projects yet.</p>';return;}
+        grid.innerHTML=projects.map(p=>{const h=p.programHealthStatus||'on_track';
+          return '<a href="donor-project-detail.html?id='+(p.projectId||p._id)+'" class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 block hover:shadow-md transition-shadow"><div class="flex items-start justify-between gap-2"><h3 class="text-[15px] font-[700]">'+Layout.esc(p.title)+'</h3><span class="text-[10px] px-2 py-0.5 rounded-full '+(HEALTH[h]||'')+' capitalize shrink-0">'+h.replace(/_/g,' ')+'</span></div><p class="text-[12px] text-gray-500 mt-2 capitalize">'+(p.status||'').replace(/_/g,' ')+'</p></a>';
+        }).join('');
+      }catch(e){Layout.el('grid').innerHTML='<p class="text-[13px] text-red-500">'+Layout.esc(e.message)+'</p>';}
+    })();
+  </script>
+</body>
+</html>

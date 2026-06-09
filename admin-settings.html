@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - SyntraAid Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','system-ui','sans-serif']},colors:{brand:{green:'#2BB673',darkgreen:'#22A05B',lightgreen:'#F2FBF6'}}}}}</script>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');body{background:#f8f9fa;color:#111827;font-family:'Poppins',sans-serif}.fi{width:100%;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:10px 14px;font-size:13px}.fi:focus{outline:none;border-color:#2BB673;box-shadow:0 0 0 3px rgba(43,182,115,.12)}</style>
+</head>
+<body class="antialiased">
+  <div id="app"></div>
+  <script src="js/config.js"></script><script src="js/auth.js"></script>
+  <script src="js/api.js"></script><script src="js/layout.js"></script>
+  <script>
+    const content = `
+      <div class="max-w-2xl space-y-3">
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <button class="acc w-full flex items-center justify-between px-5 py-4 text-left"><span class="text-[14px] font-[700]">Organisation</span><svg class="w-4 h-4 text-gray-400 chev" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+          <div class="acc-body hidden px-5 pb-5 space-y-3">
+            <div><label class="block text-[13px] font-[700] mb-1.5">Organisation name</label><input class="fi" value="SyntraAid" readonly></div>
+            <p class="text-[12px] text-gray-400">Organisation profile editing is managed by your platform administrator.</p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <button class="acc w-full flex items-center justify-between px-5 py-4 text-left"><span class="text-[14px] font-[700]">User Management</span><svg class="w-4 h-4 text-gray-400 chev" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+          <div class="acc-body hidden px-5 pb-5 space-y-3">
+            <p class="text-[13px] text-gray-600">Invite new users and activate or deactivate accounts.</p>
+            <div class="flex gap-2">
+              <a href="admin-invite.html" class="px-4 py-2.5 rounded-full bg-brand-green text-white text-[13px] font-[700]">Invite User</a>
+              <a href="admin-volunteers.html" class="px-4 py-2.5 rounded-full border border-gray-200 text-gray-700 text-[13px] font-[600]">Manage Volunteers</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <button class="acc w-full flex items-center justify-between px-5 py-4 text-left"><span class="text-[14px] font-[700]">Notifications</span><svg class="w-4 h-4 text-gray-400 chev" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+          <div class="acc-body hidden px-5 pb-5 space-y-3">
+            <div id="okBox" class="hidden rounded-xl bg-[#E8F8F0] text-brand-darkgreen px-4 py-3 text-[13px]"></div>
+            <label class="flex items-center justify-between py-1.5 text-[13px]"><span>Task assigned</span><input id="taskAssigned" type="checkbox" class="w-4 h-4 accent-[#2BB673]"></label>
+            <label class="flex items-center justify-between py-1.5 text-[13px]"><span>Deadline reminders</span><input id="deadlineReminder" type="checkbox" class="w-4 h-4 accent-[#2BB673]"></label>
+            <label class="flex items-center justify-between py-1.5 text-[13px]"><span>Task blocked</span><input id="taskBlocked" type="checkbox" class="w-4 h-4 accent-[#2BB673]"></label>
+            <label class="flex items-center justify-between py-1.5 text-[13px]"><span>Milestone completed</span><input id="milestoneCompleted" type="checkbox" class="w-4 h-4 accent-[#2BB673]"></label>
+            <p class="text-[12px] text-gray-400">Notifications are delivered in-app.</p>
+            <button id="saveNotif" type="button" class="px-5 py-2.5 rounded-full bg-brand-green text-white text-[13px] font-[700]">Save Preferences</button>
+          </div>
+        </div>
+
+      </div>
+    `;
+    Layout.render({ role:"admin", active:"settings", title:"Settings", subtitle:"Organisation, users and notifications.", content });
+
+    // accordion
+    document.addEventListener('click',(e)=>{const b=e.target.closest('.acc');if(!b)return;const body=b.nextElementSibling;const chev=b.querySelector('.chev');body.classList.toggle('hidden');if(chev)chev.style.transform=body.classList.contains('hidden')?'':'rotate(180deg)';});
+
+    // load + save notification preferences for the logged-in admin
+    const user=window.Auth.getUser()||{};
+    (async function(){
+      try{
+        const res=await window.Api.get("/users/"+user._id+"/notification-preferences");
+        const p=res.data||{};
+        ['taskAssigned','deadlineReminder','taskBlocked','milestoneCompleted'].forEach(k=>{const el=Layout.el(k);if(el)el.checked=!!p[k];});
+      }catch(e){}
+    })();
+    Layout.el('saveNotif').addEventListener('click', async ()=>{
+      const body={};['taskAssigned','deadlineReminder','taskBlocked','milestoneCompleted'].forEach(k=>{body[k]=Layout.el(k).checked;});
+      try{ await window.Api.put("/users/"+user._id+"/notification-preferences",body); const ok=Layout.el('okBox');ok.textContent='Preferences saved.';ok.classList.remove('hidden'); }
+      catch(e){ alert('Could not save: '+e.message); }
+    });
+  </script>
+</body>
+</html>

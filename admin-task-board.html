@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Board - SyntraAid Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','system-ui','sans-serif']},colors:{brand:{green:'#2BB673',darkgreen:'#22A05B',lightgreen:'#F2FBF6'}}}}}</script>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');body{background:#f8f9fa;color:#111827;font-family:'Poppins',sans-serif}</style>
+</head>
+<body class="antialiased">
+  <div id="app"></div>
+  <script src="js/config.js"></script><script src="js/auth.js"></script>
+  <script src="js/api.js"></script><script src="js/layout.js"></script>
+  <script>
+    const projectId=new URLSearchParams(location.search).get('project');
+    const content = `
+      <div class="mb-4 flex flex-wrap items-center gap-3">
+        <select id="projSelect" class="px-4 py-2.5 rounded-xl bg-white border border-gray-100 text-[13px]"><option value="">All projects</option></select>
+        <button id="newTaskBtn" class="px-5 py-2.5 rounded-full bg-brand-green text-white text-[13px] font-[700] hover:bg-brand-darkgreen">+ New Task</button>
+      </div>
+
+      <div id="newTaskForm" class="hidden bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-4">
+        <h3 class="text-[14px] font-[700] mb-3">Create a Task</h3>
+        <div id="ntMsg" class="hidden mb-3 rounded-xl px-4 py-2.5 text-[13px]"></div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="sm:col-span-2"><label class="block text-[12px] font-[600] mb-1">Title *</label><input id="ntTitle" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-[13px]" placeholder="Task title"></div>
+          <div class="sm:col-span-2"><label class="block text-[12px] font-[600] mb-1">Description</label><textarea id="ntDesc" rows="2" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-[13px]" placeholder="What needs doing?"></textarea></div>
+          <div><label class="block text-[12px] font-[600] mb-1">Project *</label><select id="ntProject" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-[13px] bg-white"></select></div>
+          <div><label class="block text-[12px] font-[600] mb-1">Due date</label><input id="ntDue" type="date" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-[13px]"></div>
+        </div>
+        <div class="flex gap-2 mt-4"><button id="ntSave" class="px-5 py-2.5 rounded-full bg-brand-green text-white text-[13px] font-[700] hover:bg-brand-darkgreen">Create Task</button><button id="ntCancel" class="px-5 py-2.5 rounded-full border border-gray-200 text-gray-700 text-[13px] font-[600] hover:bg-gray-50">Cancel</button></div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div><div class="flex items-center gap-2 mb-3"><span class="w-2.5 h-2.5 rounded-full bg-gray-400"></span><h3 class="text-[13px] font-[700] text-gray-700">Not Started</h3></div><div id="col-not_started" class="space-y-2"></div></div>
+        <div><div class="flex items-center gap-2 mb-3"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span><h3 class="text-[13px] font-[700] text-gray-700">In Progress</h3></div><div id="col-in_progress" class="space-y-2"></div></div>
+        <div><div class="flex items-center gap-2 mb-3"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span><h3 class="text-[13px] font-[700] text-amber-600">Blocked</h3></div><div id="col-blocked" class="space-y-2 rounded-xl bg-amber-50/40 p-1 min-h-[40px]"></div></div>
+        <div><div class="flex items-center gap-2 mb-3"><span class="w-2.5 h-2.5 rounded-full bg-brand-green"></span><h3 class="text-[13px] font-[700] text-gray-700">Completed</h3></div><div id="col-completed" class="space-y-2"></div></div>
+      </div>
+    `;
+    Layout.render({ role:"admin", active:"projects", title:"Task Board", subtitle:"Create, assign and track tasks across four stages.", content });
+
+    const COLS=['not_started','in_progress','blocked','completed'];
+    let roster=[];
+    const nameFor=(id)=>{ const v=roster.find(x=>String(x.userId||x._id)===String(id)); return v?((v.firstName||'')+' '+(v.lastName||'')).trim():id; };
+
+    function card(t){
+      const assignedNames=(t.assignees||[]).map(nameFor).filter(Boolean);
+      const assignedLine=assignedNames.length?('<p class="text-[11px] text-gray-500 mb-2">'+Layout.esc(assignedNames.join(', '))+'</p>'):'<p class="text-[11px] text-gray-300 mb-2">Unassigned</p>';
+      const opts=roster.filter(v=>!(t.assignees||[]).includes(String(v.userId||v._id))).map(v=>'<option value="'+Layout.esc(v.userId||v._id)+'">'+Layout.esc(((v.firstName||'')+' '+(v.lastName||'')).trim()||v.userId||v._id)+'</option>').join('');
+      return '<div class="bg-white rounded-xl p-3 shadow-sm border border-gray-100"><p class="text-[13px] font-[600] text-gray-800 mb-1">'+Layout.esc(t.title)+'</p>'+assignedLine+
+        '<select data-id="'+t._id+'" class="status-sel w-full text-[11px] border border-gray-100 rounded-lg px-2 py-1 bg-gray-50 mb-2">'+
+        COLS.map(s=>'<option value="'+s+'" '+(t.status===s?'selected':'')+'>'+s.replace(/_/g,' ')+'</option>').join('')+'</select>'+
+        '<div class="flex gap-1"><select class="assign-sel flex-1 text-[11px] border border-gray-100 rounded-lg px-2 py-1 bg-white"><option value="">Assign volunteer...</option>'+opts+'</select>'+
+        '<button class="assign-btn text-[11px] px-2 py-1 rounded-lg bg-brand-green text-white font-[700]" data-id="'+t._id+'">Add</button></div></div>';
+    }
+
+    async function load(){
+      COLS.forEach(c=>Layout.el('col-'+c).innerHTML='');
+      const pid=Layout.el('projSelect').value;
+      try{
+        const res=await window.Api.get("/tasks"+(pid?("?projectId="+pid):""));
+        const tasks=res.data||[];
+        const buckets={not_started:[],in_progress:[],blocked:[],completed:[]};
+        tasks.forEach(t=>{(buckets[t.status]||buckets.not_started).push(t);});
+        COLS.forEach(c=>{Layout.el('col-'+c).innerHTML=buckets[c].map(card).join('')||'<p class="text-[12px] text-gray-300 px-1">None</p>';});
+      }catch(e){ Layout.el('col-not_started').innerHTML='<p class="text-[12px] text-red-500">'+Layout.esc(e.message)+'</p>'; }
+    }
+
+    (async function init(){
+      try{ const rv=await window.Api.get("/volunteers"); roster=rv.data||[]; }catch(e){}
+      let projects=[];
+      try{ const rp=await window.Api.get("/projects"); projects=rp.data||[]; }catch(e){}
+      const sel=Layout.el('projSelect'); const ntp=Layout.el('ntProject');
+      projects.forEach(p=>{
+        const o=document.createElement('option');o.value=p._id;o.textContent=p.title;sel.appendChild(o);
+        const o2=document.createElement('option');o2.value=p._id;o2.textContent=p.title;ntp.appendChild(o2);
+      });
+      if(projectId){ sel.value=projectId; ntp.value=projectId; }
+      load();
+    })();
+
+    Layout.el('projSelect').addEventListener('change', load);
+
+    // New task form toggle
+    Layout.el('newTaskBtn').addEventListener('click', ()=>Layout.el('newTaskForm').classList.toggle('hidden'));
+    Layout.el('ntCancel').addEventListener('click', ()=>Layout.el('newTaskForm').classList.add('hidden'));
+
+    // Create task
+    Layout.el('ntSave').addEventListener('click', async ()=>{
+      const msg=Layout.el('ntMsg'); const show=(m,ok)=>{msg.textContent=m;msg.className='mb-3 rounded-xl px-4 py-2.5 text-[13px] '+(ok?'bg-[#E8F8F0] text-brand-darkgreen':'bg-red-50 text-red-700');};
+      const title=Layout.el('ntTitle').value.trim();
+      const projectIdVal=Layout.el('ntProject').value;
+      if(!title){show('Task title is required.',false);return;}
+      if(!projectIdVal){show('Please choose a project.',false);return;}
+      const payload={title,projectId:projectIdVal,description:Layout.el('ntDesc').value.trim(),dueDate:Layout.el('ntDue').value||undefined};
+      const btn=Layout.el('ntSave');btn.disabled=true;const t=btn.textContent;btn.textContent='Creating...';
+      try{
+        await window.Api.post("/tasks",payload);
+        Layout.el('ntTitle').value='';Layout.el('ntDesc').value='';Layout.el('ntDue').value='';
+        Layout.el('newTaskForm').classList.add('hidden');
+        load();
+      }catch(e){ show(e.message||'Could not create task.',false); }
+      finally{ btn.disabled=false;btn.textContent=t; }
+    });
+
+    // Status change + assign (event delegation)
+    document.addEventListener('change', async (e)=>{
+      if(!e.target.classList.contains('status-sel'))return;
+      try{ await window.Api.patch("/tasks/"+e.target.dataset.id+"/status",{status:e.target.value}); load(); }
+      catch(err){ alert('Could not update: '+err.message); load(); }
+    });
+    document.addEventListener('click', async (e)=>{
+      const btn=e.target.closest('.assign-btn'); if(!btn)return;
+      const sel=btn.previousElementSibling; const vid=sel&&sel.value;
+      if(!vid){ alert('Pick a volunteer first.'); return; }
+      try{ await window.Api.post("/tasks/"+btn.dataset.id+"/assign",{volunteerIds:[vid]}); load(); }
+      catch(err){ alert('Could not assign: '+err.message); }
+    });
+  </script>
+</body>
+</html>

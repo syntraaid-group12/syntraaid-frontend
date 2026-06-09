@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page Not Found - SyntraAid</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Poppins', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              green: '#2BB673',
+              darkgreen: '#22A05B',
+              lightgreen: '#F2FBF6',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+    body {
+      background-color: #fafbfa;
+      color: #111827;
+    }
+  </style>
+</head>
+
+<body class="antialiased flex flex-col min-h-screen">
+
+  <header class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-between">
+
+    <div class="flex items-center gap-2">
+      <img src="./images/logo.png" alt="SyntraAid Logo" class="h-8 w-auto object-contain"
+        onerror="this.src='https://placehold.co/100x40/ffffff/2BB673?text=Logo'">
+      <span class="text-xl font-bold text-gray-900 tracking-tight">Syntra<span
+          class="text-brand-green">Aid</span></span>
+    </div>
+
+    <nav class="hidden md:flex items-center gap-8 text-[15px] font-medium text-gray-600">
+      <a href="home.html"
+        class="hover:text-brand-green transition-colors focus:outline-none focus:text-brand-green">Home</a>
+      <a href="about.html" class="hover:text-brand-green transition-colors focus:outline-none focus:text-brand-green">About</a>
+      <a href="features.html"
+        class="hover:text-brand-green transition-colors focus:outline-none focus:text-brand-green">Features</a>
+      <a href="contact.html"
+        class="hover:text-brand-green transition-colors focus:outline-none focus:text-brand-green">Contact</a>
+    </nav>
+
+    <div class="hidden md:flex items-center gap-6">
+      <a href="onboarding-login.html"
+        class="text-[15px] font-medium text-brand-green hover:text-brand-darkgreen transition-colors focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-4 rounded-sm">Login</a>
+      <a href="onboarding-intro.html"
+        class="px-5 py-2 border border-brand-green text-gray-800 rounded-full text-[15px] font-medium hover:bg-brand-green hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2">Get
+        Started</a>
+    </div>
+
+    <button class="md:hidden text-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-green rounded-sm">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+      </svg>
+    </button>
+  </header>
+
+  <main class="flex-grow">
+
+    <section class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
+      <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-brand-lightgreen mb-6">
+        <span class="text-brand-green font-bold text-4xl">404</span>
+      </div>
+      <h1 class="text-[32px] md:text-[40px] font-bold text-gray-900 leading-tight">Page not found</h1>
+      <p class="text-[15px] text-gray-500 font-medium leading-relaxed mt-3 max-w-md mx-auto">The page you are looking for does not exist or may have moved. Let's get you back on track.</p>
+      <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="home.html" class="px-8 py-3.5 bg-brand-green text-white text-[15px] font-semibold rounded-full hover:bg-brand-darkgreen transition-colors">Back to Home</a>
+        <a href="contact.html" class="px-8 py-3.5 border border-brand-green text-gray-900 text-[15px] font-semibold rounded-full hover:bg-brand-green hover:text-white transition-colors">Contact Us</a>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="bg-[#22A05B] text-white pt-16 pb-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-y-12 gap-x-8 mb-16">
+
+        <div class="lg:col-span-1">
+          <p class="text-[11px] text-white/90 leading-relaxed font-semibold mt-1">
+            Stay Organized. Stay Focused. Stay Ahead.
+          </p>
+        </div>
+
+        <div>
+          <h4 class="font-bold text-[14px] mb-4 text-[#0B3A21]">Product</h4>
+          <ul class="space-y-3 text-[12px] font-medium text-white">
+            <li><a href="features.html" class="hover:underline focus:outline-none focus:underline">Features</a></li>
+                        <li><a href="#" class="hover:underline focus:outline-none focus:underline">How it works</a></li>
+            <li><a href="#" class="hover:underline focus:outline-none focus:underline">Testimonials</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="font-bold text-[14px] mb-4 text-[#0B3A21]">Company</h4>
+          <ul class="space-y-3 text-[12px] font-medium text-white">
+            <li><a href="about.html" class="hover:underline focus:outline-none focus:underline">About us</a></li>
+                                    <li><a href="contact.html" class="hover:underline focus:outline-none focus:underline">Contact</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="font-bold text-[14px] mb-4 text-[#0B3A21]">Support</h4>
+          <ul class="space-y-3 text-[12px] font-medium text-white">
+            <li><a href="#" class="hover:underline focus:outline-none focus:underline">Resources</a></li>
+            <li><a href="#" class="hover:underline focus:outline-none focus:underline">FAQs</a></li>
+            <li><a href="privacy.html" class="hover:underline focus:outline-none focus:underline">Privacy policy</a></li>
+            <li><a href="#" class="hover:underline focus:outline-none focus:underline">Terms of Service</a></li>
+          </ul>
+        </div>
+
+        <div class="lg:col-span-1">
+          <h4 class="font-bold text-[14px] mb-4 text-[#0B3A21]">News Letter Sign up</h4>
+          <form
+            class="flex items-center bg-white rounded-full p-1 max-w-[250px] outline outline-0 focus-within:outline-2 focus-within:outline-white/50">
+            <input type="email" placeholder="Your email address" required
+              class="w-full px-3 py-1.5 text-[11px] outline-none text-gray-800 bg-transparent rounded-l-full placeholder:text-gray-400">
+            <button type="submit"
+              class="px-4 py-1.5 text-[11px] font-bold text-gray-900 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-green">
+              Signup
+            </button>
+          </form>
+        </div>
+
+      </div>
+
+      <div class="text-center text-[11px] font-medium text-white/80 border-t border-white/20 pt-6">
+        © 2026 SyntraAid. All Rights Reserved.
+      </div>
+    </div>
+  </footer>
+<!-- DONATION popup (anonymous giving + registered donor link) -->
+  <div id="donateModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div id="donateBackdrop" class="absolute inset-0 bg-black/50"></div>
+    <div class="relative z-10 bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <h3 class="text-[16px] font-bold text-gray-900">Support Our Work</h3>
+        <button type="button" id="closeDonate" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+      </div>
+
+      <div class="px-6 py-5 overflow-y-auto">
+        <p class="text-[13px] text-gray-600 font-medium leading-relaxed mb-5">
+          Your donation helps fund transparent, community-driven projects. Give directly using the details below, no
+          account needed. To track your giving and follow project progress, donate as a registered donor.
+        </p>
+
+        <div class="bg-brand-lightgreen border border-brand-green/20 rounded-2xl p-5 mb-5">
+          <h4 class="text-[13px] font-bold text-gray-900 mb-4">Donation Account Details</h4>
+          <div class="space-y-3">
+            <div>
+              <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Bank Name</p>
+              <p class="text-[14px] font-semibold text-gray-800">BANK NAME HERE</p>
+            </div>
+            <div>
+              <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Account Name</p>
+              <p class="text-[14px] font-semibold text-gray-800">ACCOUNT NAME HERE</p>
+            </div>
+            <div>
+              <p class="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Account Number</p>
+              <p class="text-[14px] font-semibold text-gray-800">0000000000</p>
+            </div>
+          </div>
+          <p class="text-[11px] text-gray-500 font-medium mt-4 pt-3 border-t border-brand-green/20">
+            Please use your name or "SyntraAid Donation" in the transfer description so we can identify your gift.
+          </p>
+        </div>
+
+        <a href="onboarding-login.html"
+          class="flex items-center justify-center gap-2 w-full px-6 py-3 bg-brand-green text-white text-[14px] font-semibold rounded-full hover:bg-brand-darkgreen transition-colors">
+          Donate as a registered donor
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+        <p class="text-[11px] text-gray-400 font-medium text-center mt-3">
+          Registering lets you confirm your payment and follow the projects you support.
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

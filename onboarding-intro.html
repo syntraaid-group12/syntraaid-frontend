@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connect with Purpose - SyntraAid</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Poppins', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              green: '#2BB673',
+              darkgreen: '#22A05B',
+              lightgreen: '#F2FBF6',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+    body {
+      background-color: #fafbfa;
+      color: #111827;
+      margin: 0;
+      padding: 0;
+    }
+
+    #carousel-img {
+      transition: opacity 0.4s ease-in-out;
+    }
+  </style>
+</head>
+
+<body
+  class="antialiased h-[100dvh] w-full overflow-hidden flex flex-col font-sans selection:bg-brand-green selection:text-white m-0 p-0">
+
+  <main class="flex flex-col h-full w-full bg-[#fafbfa] relative overflow-hidden">
+
+    <div class="relative w-full h-[55%] shrink-0 bg-gray-200 overflow-hidden">
+      <img id="carousel-img" src="./images/image, Status bar and arrow buttons.jpg" alt="Onboarding Image"
+        class="w-full h-full object-cover">
+
+      <button id="prev-btn"
+        class="absolute left-4 top-1/2 -translate-y-1/2 w-[34px] h-[34px] flex items-center justify-center rounded-full border border-white/70 bg-black/10 backdrop-blur-sm text-white focus:outline-none hover:bg-black/20 transition-colors z-10 cursor-pointer">
+        <svg class="w-4 h-4 ml-[-1px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7"></path>
+        </svg>
+      </button>
+
+      <button id="next-btn"
+        class="absolute right-4 top-1/2 -translate-y-1/2 w-[34px] h-[34px] flex items-center justify-center rounded-full border border-brand-green bg-black/10 backdrop-blur-sm text-brand-green focus:outline-none hover:bg-black/20 transition-colors z-10 cursor-pointer">
+        <svg class="w-4 h-4 mr-[-1px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"></path>
+        </svg>
+      </button>
+    </div>
+
+    <div class="flex flex-col items-center justify-between h-[45%] shrink-0 px-4 sm:px-6 py-4 sm:py-6 w-full">
+
+      <div class="flex flex-col items-center w-full">
+        <h1 id="slide-caption"
+          class="text-[28px] sm:text-[32px] font-[800] text-gray-900 tracking-tight text-center leading-none">
+          Connect with Purpose
+        </h1>
+
+        <p class="text-[13px] font-[600] text-gray-900 text-center mt-3 max-w-[280px] leading-snug">
+          Find causes that matters and start making a real difference today.
+        </p>
+
+        <div class="flex items-center gap-[6px] mt-4 sm:mt-6">
+          <div class="carousel-dot w-[6px] h-[6px] rounded-full bg-black transition-colors duration-300"></div>
+          <div class="carousel-dot w-[6px] h-[6px] rounded-full bg-gray-300 transition-colors duration-300"></div>
+          <div class="carousel-dot w-[6px] h-[6px] rounded-full bg-gray-300 transition-colors duration-300"></div>
+        </div>
+      </div>
+
+      <div class="w-full flex flex-col items-center mt-2 sm:mt-4 w-full max-w-[320px] shrink-0">
+        <a href="onboarding-signup.html"
+          class="block w-full bg-brand-green text-gray-900 font-bold text-[15px] py-[14px] rounded-full text-center hover:bg-brand-darkgreen transition-colors focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2">
+          Get Started
+        </a>
+
+        <div class="mt-4 sm:mt-6 mb-1 sm:mb-2">
+          <a href="onboarding-login.html"
+            class="text-[11px] font-[500] text-gray-800 border-b border-gray-800 pb-[1px] hover:text-black hover:border-black transition-colors focus:outline-none">Privacy
+            and Terms of Service</a>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const slides = [
+        { image: './images/image, Status bar and arrow buttons.jpg', caption: 'Connect with Purpose' },
+        { image: './images/image, Status bar and arrow buttons (3).jpg', caption: 'Be Part of the Change' },
+        { image: './images/image, Status bar and arrow buttons (4).jpg', caption: 'See Your Impact Grow' }
+      ];
+
+      let currentIndex = 0;
+      let autoPlayInterval;
+
+      const carouselImg = document.getElementById('carousel-img');
+      const slideCaption = document.getElementById('slide-caption');
+      const dots = document.querySelectorAll('.carousel-dot');
+      const prevBtn = document.getElementById('prev-btn');
+      const nextBtn = document.getElementById('next-btn');
+
+      function goToSlide(index) {
+        carouselImg.style.opacity = '0';
+
+        setTimeout(() => {
+          carouselImg.src = slides[index].image;
+          slideCaption.textContent = slides[index].caption;
+          carouselImg.style.opacity = '1';
+        }, 400);
+
+        dots.forEach((dot, i) => {
+          if (i === index) {
+            dot.classList.remove('bg-gray-300');
+            dot.classList.add('bg-black');
+          } else {
+            dot.classList.remove('bg-black');
+            dot.classList.add('bg-gray-300');
+          }
+        });
+      }
+
+      function nextSlide() {
+        currentIndex = (currentIndex + 1) % slides.length;
+        goToSlide(currentIndex);
+      }
+
+      function prevSlide() {
+        currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+        goToSlide(currentIndex);
+      }
+
+      function startAutoPlay() {
+        autoPlayInterval = setInterval(nextSlide, 4000);
+      }
+
+      function resetAutoPlay() {
+        clearInterval(autoPlayInterval);
+        startAutoPlay();
+      }
+
+      nextBtn.addEventListener('click', () => {
+        nextSlide();
+        resetAutoPlay();
+      });
+
+      prevBtn.addEventListener('click', () => {
+        prevSlide();
+        resetAutoPlay();
+      });
+
+      startAutoPlay();
+    });
+  </script>
+</body>
+
+</html>
