@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - SyntraAid</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: {
+        fontFamily: { sans: ['Poppins', 'system-ui', 'sans-serif'] },
+        colors: { brand: { green: '#2BB673', darkgreen: '#22A05B', lightgreen: '#F2FBF6' } }
+      } }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+    body { background-color: #f8f9fa; color: #111827; font-family: 'Poppins', sans-serif; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+  </style>
+</head>
+
+<body class="antialiased">
+  <div id="app"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    const content = `
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100 flex items-center gap-4">
+          <div class="w-11 h-11 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+          </div>
+          <div class="min-w-0">
+            <p class="text-[12px] text-gray-500 font-[500]">Total Projects</p>
+            <p class="text-[22px] font-[800] text-gray-900 leading-tight" id="kpi-projects">--</p>
+            <p class="text-[11px] text-gray-400 font-[500]">active and completed</p>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100 flex items-center gap-4">
+          <div class="w-11 h-11 rounded-full bg-[#E8F8F0] flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          </div>
+          <div class="min-w-0">
+            <p class="text-[12px] text-gray-500 font-[500]">Total Volunteers</p>
+            <p class="text-[22px] font-[800] text-gray-900 leading-tight" id="kpi-volunteers">--</p>
+            <p class="text-[11px] text-gray-400 font-[500]">registered profiles</p>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100 flex items-center gap-4">
+          <div class="w-11 h-11 rounded-full bg-purple-50 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+          </div>
+          <div class="min-w-0">
+            <p class="text-[12px] text-gray-500 font-[500]">Tasks Completed</p>
+            <p class="text-[22px] font-[800] text-gray-900 leading-tight" id="kpi-tasks">--</p>
+            <p class="text-[11px] text-gray-400 font-[500]" id="kpi-tasks-sub">of all tasks</p>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100 flex items-center gap-4">
+          <div class="w-11 h-11 rounded-full bg-amber-50 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          </div>
+          <div class="min-w-0">
+            <p class="text-[12px] text-gray-500 font-[500]">Total Hours Logged</p>
+            <p class="text-[22px] font-[800] text-gray-900 leading-tight" id="kpi-hours">--</p>
+            <p class="text-[11px] text-gray-400 font-[500]">from attendance</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <h2 class="text-[15px] font-[700] text-gray-900 mb-4">Projects by Status</h2>
+          <div class="flex items-center justify-center">
+            <svg id="pie-chart" width="140" height="140" viewBox="0 0 140 140"></svg>
+          </div>
+          <div id="pie-legend" class="mt-4 space-y-1.5 text-[12px]"></div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col">
+          <h2 class="text-[15px] font-[700] text-gray-900 mb-4">Task Completion</h2>
+          <div class="flex-1 flex flex-col items-center justify-center">
+            <p class="text-[40px] font-[800] text-brand-green leading-none" id="task-rate">--</p>
+            <p class="text-[12px] text-gray-500 mt-1">Overall completion rate</p>
+            <div class="w-full bg-gray-100 rounded-full h-2.5 mt-4">
+              <div id="task-bar" class="bg-brand-green h-2.5 rounded-full" style="width:0%"></div>
+            </div>
+            <p class="text-[12px] text-gray-500 mt-3" id="task-detail">--</p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <h2 class="text-[15px] font-[700] text-gray-900 mb-4">At a Glance</h2>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between"><span class="text-[13px] text-gray-500">Active Projects</span><span class="text-[15px] font-[700] text-gray-900" id="glance-active">--</span></div>
+            <div class="flex items-center justify-between"><span class="text-[13px] text-gray-500">Completed Projects</span><span class="text-[15px] font-[700] text-gray-900" id="glance-completed">--</span></div>
+            <div class="flex items-center justify-between"><span class="text-[13px] text-gray-500">Total Tasks</span><span class="text-[15px] font-[700] text-gray-900" id="glance-tasks">--</span></div>
+            <div class="flex items-center justify-between"><span class="text-[13px] text-gray-500">Donor Links</span><span class="text-[15px] font-[700] text-gray-900" id="glance-donors">--</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-[15px] font-[700] text-gray-900">Recent Activity</h2>
+          <a href="admin-transparency.html" class="text-[12px] text-brand-green font-[600]">View All</a>
+        </div>
+        <div id="activity-list" class="divide-y divide-gray-50">
+          <p class="text-[13px] text-gray-400 py-3">Loading activity...</p>
+        </div>
+      </div>
+    `;
+
+    Layout.render({ role: "admin", active: "dashboard", title: "Dashboard",
+      subtitle: "Welcome back! Here is what is happening today.", content });
+
+    function drawPie(counts) {
+      const palette = { active: '#2BB673', completed: '#2563EB', planning: '#F59E0B', on_hold: '#9CA3AF', cancelled: '#EF4444' };
+      const labels = { active: 'Active', completed: 'Completed', planning: 'Planning', on_hold: 'On Hold', cancelled: 'Cancelled' };
+      const entries = Object.keys(counts).filter(k => counts[k] > 0);
+      const total = entries.reduce((s, k) => s + counts[k], 0);
+      const svg = document.getElementById('pie-chart');
+      const legend = document.getElementById('pie-legend');
+      if (!total) { svg.innerHTML = '<circle cx="70" cy="70" r="55" fill="none" stroke="#eee" stroke-width="18"/>'; legend.innerHTML = '<p class="text-gray-400">No projects yet</p>'; return; }
+      let a0 = -Math.PI / 2, html = '';
+      entries.forEach(k => {
+        const frac = counts[k] / total, a1 = a0 + frac * 2 * Math.PI;
+        const x0 = 70 + 55 * Math.cos(a0), y0 = 70 + 55 * Math.sin(a0);
+        const x1 = 70 + 55 * Math.cos(a1), y1 = 70 + 55 * Math.sin(a1);
+        const large = frac > 0.5 ? 1 : 0;
+        html += '<path d="M70 70 L' + x0.toFixed(2) + ' ' + y0.toFixed(2) + ' A55 55 0 ' + large + ' 1 ' + x1.toFixed(2) + ' ' + y1.toFixed(2) + ' Z" fill="' + palette[k] + '"/>';
+        a0 = a1;
+      });
+      html += '<circle cx="70" cy="70" r="32" fill="#fff"/>';
+      svg.innerHTML = html;
+      legend.innerHTML = entries.map(k =>
+        '<div class="flex items-center justify-between"><span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full" style="background:' + palette[k] + '"></span>' + labels[k] + '</span><span class="font-[600] text-gray-700">' + counts[k] + '</span></div>'
+      ).join('');
+    }
+
+    function timeAgo(d) {
+      const s = Math.floor((Date.now() - new Date(d).getTime()) / 1000);
+      if (s < 60) return s + 's ago';
+      if (s < 3600) return Math.floor(s/60) + 'm ago';
+      if (s < 86400) return Math.floor(s/3600) + 'h ago';
+      return Math.floor(s/86400) + 'd ago';
+    }
+
+    (async function load() {
+      try {
+        const res = await window.Api.get("/reports/kpis");
+        const d = res.data || {};
+        Layout.el('kpi-projects').textContent = d.totalProjects != null ? d.totalProjects : 0;
+        Layout.el('kpi-volunteers').textContent = d.totalVolunteers != null ? d.totalVolunteers : 0;
+        Layout.el('kpi-tasks').textContent = d.completedTasks != null ? d.completedTasks : 0;
+        Layout.el('kpi-tasks-sub').textContent = 'of ' + (d.totalTasks != null ? d.totalTasks : 0) + ' tasks';
+        Layout.el('kpi-hours').textContent = (d.totalHoursLogged != null ? d.totalHoursLogged : 0) + 'h';
+        Layout.el('glance-active').textContent = d.activeProjects != null ? d.activeProjects : 0;
+        Layout.el('glance-completed').textContent = d.completedProjects != null ? d.completedProjects : 0;
+        Layout.el('glance-tasks').textContent = d.totalTasks != null ? d.totalTasks : 0;
+        Layout.el('glance-donors').textContent = d.totalDonorLinks != null ? d.totalDonorLinks : 0;
+        const rate = (d.taskCompletionRate != null) ? d.taskCompletionRate : '0%';
+        Layout.el('task-rate').textContent = (typeof rate === 'string') ? rate : (rate + '%');
+        const pct = parseInt(String(rate)) || 0;
+        Layout.el('task-bar').style.width = pct + '%';
+        Layout.el('task-detail').textContent = (d.completedTasks != null ? d.completedTasks : 0) + ' of ' + (d.totalTasks != null ? d.totalTasks : 0) + ' tasks completed';
+      } catch (e) { console.error(e); }
+
+      try {
+        const res = await window.Api.get("/projects");
+        const counts = { planning:0, active:0, on_hold:0, completed:0, cancelled:0 };
+        (res.data || []).forEach(p => { if (counts[p.status] != null) counts[p.status]++; });
+        drawPie(counts);
+      } catch (e) { drawPie({planning:0,active:0,on_hold:0,completed:0,cancelled:0}); }
+
+      try {
+        const res = await window.Api.get("/activity-logs?limit=8");
+        const list = res.data || [];
+        const box = Layout.el('activity-list');
+        if (!list.length) { box.innerHTML = '<p class="text-[13px] text-gray-400 py-3">No activity recorded yet.</p>'; return; }
+        box.innerHTML = list.map(a =>
+          '<div class="flex items-start justify-between py-3"><div class="min-w-0 pr-3"><p class="text-[13px] font-[600] text-gray-900">' +
+          Layout.esc((a.activityType||'').replace(/_/g,' ')) + '</p><p class="text-[12px] text-gray-500 truncate">' +
+          Layout.esc(a.description||'') + '</p></div><span class="text-[11px] text-gray-400 shrink-0">' + timeAgo(a.createdAt) + '</span></div>'
+        ).join('');
+      } catch (e) {
+        Layout.el('activity-list').innerHTML = '<p class="text-[13px] text-gray-400 py-3">Could not load activity.</p>';
+      }
+    })();
+  </script>
+</body>
+
+</html>

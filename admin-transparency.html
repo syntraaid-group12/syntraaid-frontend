@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transparency - SyntraAid Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','system-ui','sans-serif']},colors:{brand:{green:'#2BB673',darkgreen:'#22A05B',lightgreen:'#F2FBF6'}}}}}</script>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');body{background:#f8f9fa;color:#111827;font-family:'Poppins',sans-serif}.fi{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:10px 14px;font-size:13px}</style>
+</head>
+<body class="antialiased">
+  <div id="app"></div>
+  <script src="js/config.js"></script><script src="js/auth.js"></script>
+  <script src="js/api.js"></script><script src="js/layout.js"></script>
+  <script>
+    const content = `
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-[15px] font-[700]">Activity Log</h2>
+            <select id="typeFilter" class="fi"><option value="">All activity</option>
+              <option value="project_created">Project created</option>
+              <option value="project_status_changed">Project status changed</option>
+              <option value="task_created">Task created</option>
+              <option value="task_status_changed">Task status changed</option>
+              <option value="volunteer_assigned">Volunteer assigned</option>
+              <option value="attendance_logged">Attendance logged</option>
+              <option value="milestone_completed">Milestone completed</option>
+              <option value="report_generated">Report generated</option>
+              <option value="donor_linked">Donor linked</option>
+            </select>
+          </div>
+          <div id="feed" class="divide-y divide-gray-50"><p class="text-[13px] text-gray-400 py-3">Loading...</p></div>
+        </div>
+
+        <div class="lg:col-span-1 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <h2 class="text-[15px] font-[700] mb-4">Volunteer Contributions</h2>
+          <p class="text-[12px] text-gray-500 mb-3">Total hours by volunteer and project.</p>
+          <div id="contrib" class="space-y-2"><p class="text-[13px] text-gray-400">Loading...</p></div>
+        </div>
+      </div>
+      <p class="text-[11px] text-gray-400 mt-3">The activity log is tamper-proof: entries are system-written and cannot be edited or deleted.</p>
+    `;
+    Layout.render({ role:"admin", active:"transparency", title:"Transparency", subtitle:"A tamper-proof record of significant actions.", content });
+
+    function timeAgo(d){const s=Math.floor((Date.now()-new Date(d).getTime())/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
+
+    async function loadFeed(){
+      const type=Layout.el('typeFilter').value;
+      const feed=Layout.el('feed');
+      feed.innerHTML='<p class="text-[13px] text-gray-400 py-3">Loading...</p>';
+      try{
+        const res=await window.Api.get("/activity-logs?limit=40"+(type?('&activityType='+type):''));
+        const list=res.data||[];
+        if(!list.length){feed.innerHTML='<p class="text-[13px] text-gray-400 py-3">No activity.</p>';return;}
+        feed.innerHTML=list.map(a=>'<div class="flex items-start justify-between py-3"><div class="min-w-0 pr-3"><p class="text-[13px] font-[600] capitalize">'+Layout.esc((a.activityType||'').replace(/_/g,' '))+'</p><p class="text-[12px] text-gray-500">'+Layout.esc(a.description||'')+'</p></div><span class="text-[11px] text-gray-400 shrink-0">'+timeAgo(a.createdAt)+'</span></div>').join('');
+      }catch(e){feed.innerHTML='<p class="text-[13px] text-red-500 py-3">'+Layout.esc(e.message)+'</p>';}
+    }
+    loadFeed();
+    Layout.el('typeFilter').addEventListener('change', loadFeed);
+
+    (async function contrib(){
+      try{
+        const res=await window.Api.get("/reports/contributions");
+        const list=res.data||[];const box=Layout.el('contrib');
+        if(!list.length){box.innerHTML='<p class="text-[13px] text-gray-400">No contributions yet.</p>';return;}
+        const max=Math.max.apply(null,list.map(c=>c.totalHours||0))||1;
+        box.innerHTML=list.slice(0,12).map(c=>{
+          const w=Math.round((c.totalHours/max)*100);
+          return '<div><div class="flex justify-between text-[12px] mb-0.5"><span class="text-gray-600 truncate pr-2">'+Layout.esc((c._id&&c._id.volunteerId)||'volunteer')+'</span><span class="font-[600]">'+c.totalHours+'h</span></div><div class="w-full bg-gray-100 rounded-full h-2"><div class="bg-brand-green h-2 rounded-full" style="width:'+w+'%"></div></div></div>';
+        }).join('');
+      }catch(e){Layout.el('contrib').innerHTML='<p class="text-[13px] text-red-500">'+Layout.esc(e.message)+'</p>';}
+    })();
+  </script>
+</body>
+</html>

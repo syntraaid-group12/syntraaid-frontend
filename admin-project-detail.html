@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Detail - SyntraAid Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','system-ui','sans-serif']},colors:{brand:{green:'#2BB673',darkgreen:'#22A05B',lightgreen:'#F2FBF6'}}}}}</script>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');body{background:#f8f9fa;color:#111827;font-family:'Poppins',sans-serif}.tab.active{color:#2BB673;border-color:#2BB673}</style>
+</head>
+<body class="antialiased">
+  <div id="app"></div>
+  <script src="js/config.js"></script><script src="js/auth.js"></script>
+  <script src="js/api.js"></script><script src="js/layout.js"></script>
+  <script>
+    const projectId = new URLSearchParams(location.search).get('id');
+    const content = `
+      <div id="head" class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-4">
+        <p class="text-[13px] text-gray-400">Loading project...</p>
+      </div>
+      <div class="flex gap-1 border-b border-gray-200 mb-4 overflow-x-auto">
+        <button data-tab="overview" class="tab active px-4 py-2.5 text-[13px] font-[600] border-b-2 -mb-px">Overview</button>
+        <button data-tab="volunteers" class="tab px-4 py-2.5 text-[13px] font-[600] border-b-2 border-transparent text-gray-500">Volunteers</button>
+        <button data-tab="tasks" class="tab px-4 py-2.5 text-[13px] font-[600] border-b-2 border-transparent text-gray-500">Tasks</button>
+        <button data-tab="attendance" class="tab px-4 py-2.5 text-[13px] font-[600] border-b-2 border-transparent text-gray-500">Attendance</button>
+        <button data-tab="activity" class="tab px-4 py-2.5 text-[13px] font-[600] border-b-2 border-transparent text-gray-500">Activity</button>
+      </div>
+      <div id="tab-body"></div>
+    `;
+    Layout.render({ role:"admin", active:"projects", title:"Project Detail", subtitle:"", content });
+
+    const HEALTH={on_track:'bg-[#E8F8F0] text-brand-green',at_risk:'bg-amber-50 text-amber-600',needs_attention:'bg-red-50 text-red-500',completed:'bg-blue-50 text-blue-600'};
+    let project=null;
+
+    if(!projectId){ Layout.el('head').innerHTML='<p class="text-[13px] text-red-500">No project id provided.</p>'; }
+
+    async function loadProject(){
+      try{
+        const res=await window.Api.get("/projects/"+projectId);
+        project=res.data;
+        const h=project.programHealthStatus||'on_track';
+        Layout.el('head').innerHTML='<div class="flex items-start justify-between gap-3 flex-wrap"><div><h2 class="text-[18px] font-[800]">'+Layout.esc(project.title)+'</h2><p class="text-[13px] text-gray-500 mt-1">'+Layout.esc(project.description||'')+'</p></div>'+
+          '<div class="flex gap-2"><span class="text-[11px] px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 capitalize">'+(project.status||'').replace(/_/g,' ')+'</span>'+
+          '<span class="text-[11px] px-2.5 py-1 rounded-full '+(HEALTH[h]||'bg-gray-100')+' capitalize">'+h.replace(/_/g,' ')+'</span></div></div>';
+        showTab('overview');
+      }catch(e){ Layout.el('head').innerHTML='<p class="text-[13px] text-red-500">'+Layout.esc(e.message)+'</p>'; }
+    }
+
+    async function showTab(tab){
+      document.querySelectorAll('.tab').forEach(t=>{const on=t.dataset.tab===tab;t.classList.toggle('active',on);t.classList.toggle('text-gray-500',!on);t.classList.toggle('border-transparent',!on);});
+      const body=Layout.el('tab-body');
+      body.innerHTML='<p class="text-[13px] text-gray-400">Loading...</p>';
+      if(!project)return;
+      try{
+        if(tab==='overview'){
+          const ms=(project.milestones||[]);
+          body.innerHTML='<div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100"><h3 class="text-[14px] font-[700] mb-3">Goals</h3><p class="text-[13px] text-gray-600 mb-5">'+Layout.esc(project.goals||'No goals set.')+'</p>'+
+            '<h3 class="text-[14px] font-[700] mb-3">Milestones</h3>'+(ms.length?('<div class="space-y-2">'+ms.map(m=>'<div class="flex items-center justify-between border border-gray-100 rounded-xl px-4 py-2.5"><span class="text-[13px] '+(m.isCompleted?'line-through text-gray-400':'text-gray-700')+'">'+Layout.esc(m.title)+'</span><span class="text-[11px] '+(m.isCompleted?'text-brand-green':'text-gray-400')+'">'+(m.isCompleted?'Completed':(m.dueDate?new Date(m.dueDate).toLocaleDateString():'No due date'))+'</span></div>').join('')+'</div>'):'<p class="text-[13px] text-gray-400">No milestones.</p>')+'</div>';
+        } else if(tab==='volunteers'){
+          const ids=project.volunteers||[];
+          body.innerHTML='<div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100"><h3 class="text-[14px] font-[700] mb-3">Assigned Volunteers ('+ids.length+')</h3>'+(ids.length?('<div class="space-y-2">'+ids.map(id=>'<div class="flex items-center gap-3 border border-gray-100 rounded-xl px-4 py-2.5"><div class="w-8 h-8 rounded-full bg-brand-green text-white flex items-center justify-center text-[12px] font-[700]">V</div><span class="text-[13px] text-gray-600">'+Layout.esc(id)+'</span></div>').join('')+'</div>'):'<p class="text-[13px] text-gray-400">No volunteers assigned.</p>')+'</div>';
+        } else if(tab==='tasks'){
+          const res=await window.Api.get("/tasks?projectId="+projectId);
+          const tasks=res.data||[];
+          const badge={not_started:'bg-gray-100 text-gray-500',in_progress:'bg-blue-50 text-blue-600',blocked:'bg-amber-50 text-amber-600',completed:'bg-[#E8F8F0] text-brand-green'};
+          body.innerHTML='<div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100"><div class="flex items-center justify-between mb-3"><h3 class="text-[14px] font-[700]">Tasks ('+tasks.length+')</h3><a href="admin-task-board.html?project='+projectId+'" class="text-[12px] text-brand-green font-[700]">Open Task Board</a></div>'+(tasks.length?('<div class="space-y-2">'+tasks.map(t=>'<div class="flex items-center justify-between border border-gray-100 rounded-xl px-4 py-2.5"><span class="text-[13px] text-gray-700">'+Layout.esc(t.title)+'</span><span class="text-[11px] px-2 py-0.5 rounded-full '+(badge[t.status]||'')+' capitalize">'+(t.status||'').replace(/_/g,' ')+'</span></div>').join('')+'</div>'):'<p class="text-[13px] text-gray-400">No tasks yet.</p>')+'</div>';
+        } else if(tab==='attendance'){
+          const res=await window.Api.get("/attendance?projectId="+projectId);
+          const logs=res.data||[];
+          body.innerHTML='<div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100"><h3 class="text-[14px] font-[700] mb-3">Attendance (total '+(res.totalHoursLogged||0)+'h)</h3>'+(logs.length?('<div class="overflow-x-auto"><table class="w-full text-[13px]"><thead><tr class="text-left text-gray-400 border-b border-gray-100"><th class="py-2 font-[600]">Date</th><th class="py-2 font-[600]">Volunteer</th><th class="py-2 font-[600]">Hours</th></tr></thead><tbody>'+logs.map(l=>'<tr class="border-b border-gray-50"><td class="py-2">'+new Date(l.sessionDate).toLocaleDateString()+'</td><td class="py-2 text-gray-500">'+Layout.esc(l.volunteerId)+'</td><td class="py-2 font-[600]">'+l.hoursLogged+'h</td></tr>').join('')+'</tbody></table></div>'):'<p class="text-[13px] text-gray-400">No attendance logged.</p>')+'</div>';
+        } else if(tab==='activity'){
+          const res=await window.Api.get("/activity-logs?targetId="+projectId+"&limit=30");
+          const list=res.data||[];
+          body.innerHTML='<div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100"><h3 class="text-[14px] font-[700] mb-3">Activity</h3>'+(list.length?('<div class="divide-y divide-gray-50">'+list.map(a=>'<div class="py-2.5"><p class="text-[13px] font-[600] capitalize">'+Layout.esc((a.activityType||'').replace(/_/g,' '))+'</p><p class="text-[12px] text-gray-500">'+Layout.esc(a.description||'')+'</p></div>').join('')+'</div>'):'<p class="text-[13px] text-gray-400">No activity for this project.</p>')+'</div>';
+        }
+      }catch(e){ body.innerHTML='<p class="text-[13px] text-red-500">'+Layout.esc(e.message)+'</p>'; }
+    }
+
+    document.addEventListener('click',(e)=>{const t=e.target.closest('.tab');if(t)showTab(t.dataset.tab);});
+    if(projectId) loadProject();
+  </script>
+</body>
+</html>

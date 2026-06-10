@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home - SyntraAid</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Poppins', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              green: '#2BB673',
+              darkgreen: '#22A05B',
+              lightgreen: '#F2FBF6',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+    body {
+      background-color: #fafbfa;
+      color: #111827;
+    }
+  </style>
+</head>
+
+<body class="antialiased flex flex-col min-h-screen">
+
+  <header class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-between">
+
+    <div class="flex items-center gap-2">
+      <img src="./images/logo.png" alt="SyntraAid Logo" class="h-8 w-auto object-contain"
+        onerror="this.src='https://placehold.co/100x40/ffffff/2BB673?text=Logo'">
+      <span class="text-xl font-bold text-gray-900 tracking-tight">Syntra<span
+          class="text-brand-green">Aid</span></span>
+    </div>
+
+    <nav class="hidden md:flex items-center gap-8 text-[15px] font-medium text-gray-600">
+      <a href="home.html"
+        class="text-brand-green border-b-2 border-brand-green pb-1 focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-4 rounded-sm">Home</a>
+      <a href="about.html" class="hover:text-brand-green transition-colors focus:outline-none focus:text-brand-green">About</a>
+      <a href="features.html"
+        class="hover:text-brand-green transition-colors focus:outline-none focus:text-brand-green">Features</a>
+      <a href="contact.html"
+        class="hover:text-brand-green transition-colors focus:outline-none focus:text-brand-green">Contact</a>
+    </nav>
+
+    <div class="hidden md:flex items-center gap-6">
+      <a href="onboarding-login.html"
+        class="text-[15px] font-medium text-brand-green hover:text-brand-darkgreen transition-colors focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-4 rounded-sm">Login</a>
+      <a href="contact.html"
+        class="px-5 py-2 border border-brand-green text-gray-800 rounded-full text-[15px] font-medium hover:bg-brand-green hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2">Get
+        Started</a>
+    </div>
+
+    <button class="md:hidden text-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-green rounded-sm">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+      </svg>
+    </button>
+  </header>
+
+  <main class="flex-grow">
+
+
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-16">
+      <div class="flex flex-col lg:flex-row items-center gap-12">
+        <div class="lg:w-[55%] flex flex-col gap-6">
+          <h1 class="text-[40px] md:text-[50px] lg:text-[56px] font-bold text-gray-900 leading-[1.1] tracking-tight">
+            Build Trust Through Transparent NGO Operations
+          </h1>
+          <p class="text-[16px] lg:text-[18px] text-gray-500 leading-relaxed font-medium max-w-[90%]">
+            SyntraAid helps NGO's coordinate, Volunteer, track project execution and also provide donors with real time
+            visibility into measurable social impact
+          </p>
+        </div>
+        <div class="lg:w-[45%] w-full">
+
+          <img src="./images/Hands Image.png" alt="Transparent NGO Operations"
+            class="w-full h-auto object-cover rounded-2xl shadow-sm"
+            onerror="this.src='https://placehold.co/800x600/e2e8f0/94a3b8?text=Hands+Image'">
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-8 mt-20">
+        <a href="contact.html"
+          class="px-8 py-3.5 bg-brand-green text-white text-[15px] font-semibold rounded-full hover:bg-brand-darkgreen transition-colors focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2 shadow-sm">Request
+          Early Access</a>
+        <a href="features.html"
+          class="text-brand-green text-[15px] font-semibold hover:text-brand-darkgreen transition-colors focus:outline-none focus:ring-2 focus:ring-brand-green rounded-sm px-2 py-1">View
+          Platform Features</a>
+      </div>
+    </section>
+
+
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <h2 class="text-[22px] md:text-[26px] font-bold text-gray-900 mb-4">One platform for Coordination,
+          Accountability and impact</h2>
+        <p class="text-[15px] text-gray-500 font-medium leading-relaxed">
+          Helping to bring your volunteers, projects and reporting together in one place, so your team can focus on real impact without missing a beat.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+        <div
+          class="bg-brand-lightgreen border border-brand-green/30 rounded-2xl p-8 flex flex-col items-center text-center shadow-sm">
+          <img src="./images/icon-drag-drop-boards.svg" alt="Feature Icon" class="w-20 h-20 object-contain mb-6 shrink-0">
+          <h3 class="text-[15px] font-bold text-gray-900 mb-2">Volunteer Coordination</h3>
+          <p class="text-[12px] text-gray-500 font-medium">Profiles, Skills and Assignment</p>
+        </div>
+
+        <div
+          class="bg-brand-lightgreen border border-brand-green/30 rounded-2xl p-8 flex flex-col items-center text-center shadow-sm">
+          <img src="./images/icon-smart-reports.svg" alt="Feature Icon" class="w-20 h-20 object-contain mb-6 shrink-0">
+          <h3 class="text-[15px] font-bold text-gray-900 mb-2">Projects &amp; Tasks</h3>
+          <p class="text-[12px] text-gray-500 font-medium">Milestones and Task Tracking</p>
+        </div>
+
+        <div
+          class="bg-brand-lightgreen border border-brand-green/30 rounded-2xl p-8 flex flex-col items-center text-center shadow-sm">
+          <img src="./images/icon-realtime-collaboration.svg" alt="Feature Icon" class="w-20 h-20 object-contain mb-6 shrink-0">
+          <h3 class="text-[15px] font-bold text-gray-900 mb-2">Attendance &amp; Hours</h3>
+          <p class="text-[12px] text-gray-500 font-medium">Logged and Computed Automatically</p>
+        </div>
+
+        <div
+          class="bg-brand-lightgreen border border-brand-green/30 rounded-2xl p-8 flex flex-col items-center text-center shadow-sm">
+          <img src="./images/icon-integrations.svg" alt="Feature Icon" class="w-20 h-20 object-contain mb-6 shrink-0">
+          <h3 class="text-[15px] font-bold text-gray-900 mb-2">Transparency</h3>
+          <p class="text-[12px] text-gray-500 font-medium leading-tight">Tamper-proof Activity Log and Donor Visibility</p>
+        </div>
+      </div>
+    </section>
+
+
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div class="text-center max-w-2xl mx-auto mb-16">
+        <h2 class="text-[20px] md:text-[24px] font-bold text-gray-900 mb-4">Trusted By Teams Everywhere</h2>
+        <p class="text-[14px] text-gray-500 font-medium leading-relaxed">
+          NGOs and community organisations rely on <span
+            class="text-brand-green font-semibold">SyntraAid</span> to keep their projects moving
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+        <div
+          class="bg-white border border-brand-green/20 rounded-3xl p-10 flex flex-col items-center text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+          <p class="text-[13px] text-gray-600 font-medium leading-relaxed mb-8">
+            Coordinators can see every project's health and act on blocked tasks before they slow delivery down.
+          </p>
+          <div class="mt-auto">
+            <p class="text-[12px] font-bold text-gray-900 mb-1">For Coordinators</p>
+            <p class="text-[11px] font-medium text-gray-500">Project oversight</p>
+          </div>
+        </div>
+
+        <div
+          class="bg-white border border-brand-green/20 rounded-3xl p-10 flex flex-col items-center text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+          <p class="text-[13px] text-gray-600 font-medium leading-relaxed mb-8">
+            Volunteers log attendance and update tasks in seconds, from the web or the mobile app.
+          </p>
+          <div class="mt-auto">
+            <p class="text-[12px] font-bold text-gray-900 mb-1">For Volunteers</p>
+            <p class="text-[11px] font-medium text-gray-500">Field participation</p>
+          </div>
+        </div>
+
+        <div
+          class="bg-white border border-brand-green/20 rounded-3xl p-10 flex flex-col items-center text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+          <p class="text-[13px] text-gray-600 font-medium leading-relaxed mb-8">
+            Donors get real-time visibility into funded projects, progress and program health, with privacy protected.
+          </p>
+          <div class="mt-auto">
+            <p class="text-[12px] font-bold text-gray-900 mb-1">For Donors</p>
+            <p class="text-[11px] font-medium text-gray-500">Transparent impact</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div class="text-center max-w-2xl mx-auto mb-16">
+        <h2 class="text-[20px] md:text-[24px] font-bold text-gray-900 mb-4">Curious to Know How <span
+            class="text-brand-green">SyntraAid</span> Works</h2>
+        <p class="text-[14px] text-gray-500 font-medium leading-relaxed">
+          Get started in minutes and keep your projects and tasks moving with just these four steps
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+
+        <div
+          class="bg-brand-lightgreen border border-brand-green/30 rounded-2xl p-8 flex flex-col items-center text-center shadow-sm">
+          <img src="./images/ngo_workplace_icon.svg" alt="Feature Icon" class="w-20 h-20 object-contain mb-6 shrink-0">
+          <h3 class="text-[15px] font-bold text-gray-900 mb-2">Create Your Workspace</h3>
+          <p class="text-[12px] text-gray-500 font-medium leading-relaxed">Setup your team in seconds and invite members
+            no complicated onboarding.</p>
+        </div>
+
+        <div
+          class="bg-brand-lightgreen border border-brand-green/30 rounded-2xl p-8 flex flex-col items-center text-center shadow-sm">
+          <img src="./images/icon-organize-projects.svg" alt="Feature Icon" class="w-20 h-20 object-contain mb-6 shrink-0">
+          <h3 class="text-[15px] font-bold text-gray-900 mb-2">Organize Your Projects</h3>
+          <p class="text-[12px] text-gray-500 font-medium leading-relaxed">Use boards lists and tasks to structure your
+            workflow the way your team works best.</p>
+        </div>
+
+        <div
+          class="bg-brand-lightgreen border border-brand-green/30 rounded-2xl p-8 flex flex-col items-center text-center shadow-sm">
+          <img src="./images/icon-collaborate-realtime.svg" alt="Feature Icon" class="w-20 h-20 object-contain mb-6 shrink-0">
+          <h3 class="text-[15px] font-bold text-gray-900 mb-2">Collaborate In Real Time</h3>
+          <p class="text-[12px] text-gray-500 font-medium leading-relaxed">Share updates, assign tasks and stay aligned
+            with comments and notifications.</p>
+        </div>
+      </div>
+
+      <div class="flex justify-center">
+
+        <div
+          class="w-full md:w-[32%] bg-brand-lightgreen border border-brand-green/30 rounded-2xl p-8 flex flex-col items-center text-center shadow-sm">
+          <img src="./images/icon-track-improve.svg" alt="Feature Icon" class="w-20 h-20 object-contain mb-6 shrink-0">
+          <h3 class="text-[15px] font-bold text-gray-900 mb-2">Track And Improve</h3>
+          <p class="text-[12px] text-gray-500 font-medium leading-relaxed">Visualizing progress with reports and
+            analytics to keep projects on schedule.</p>
+        </div>
+      </div>
+    </section>
+
+
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 pb-24">
+      <div class="bg-[#7CD7A6] rounded-[32px] p-10 md:p-16 text-center shadow-sm">
+        <h2 class="text-[28px] md:text-[34px] font-bold text-white mb-3">Take Your Projects To The Next Level !!!</h2>
+        <p class="text-[14px] md:text-[15px] font-medium text-white mb-10 max-w-2xl mx-auto">
+          <span class="font-bold">SyntraAid</span> helps teams stay organized, connected and ahead it's an all in one
+          platform.
+        </p>
+
+        <form onsubmit="return false"
+          class="flex items-center justify-between w-full max-w-md mx-auto bg-white p-1 rounded-full outline outline-0 focus-within:outline-2 focus-within:outline-brand-green transition-all shadow-sm">
+          <input type="email" placeholder="Email Us" required
+            class="w-full bg-transparent px-5 py-3 outline-none text-gray-800 text-[13px] placeholder:text-gray-400">
+          <button type="submit"
+            class="px-8 py-3 bg-[#7CD7A6] text-gray-900 font-semibold rounded-full text-[13px] hover:bg-[#68C592] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7CD7A6]">
+            Get Started
+          </button>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="bg-[#22A05B] text-white pt-16 pb-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-y-12 gap-x-8 mb-16">
+
+        <div class="lg:col-span-1">
+          <p class="text-[11px] text-white/90 leading-relaxed font-semibold mt-1">
+            Stay Organized. Stay Focused. Stay Ahead.
+          </p>
+        </div>
+
+        <div>
+          <h4 class="font-bold text-[14px] mb-4 text-[#0B3A21]">Product</h4>
+          <ul class="space-y-3 text-[12px] font-medium text-white">
+            <li><a href="features.html" class="hover:underline focus:outline-none focus:underline">Features</a></li>
+                        <li><a href="#" class="hover:underline focus:outline-none focus:underline">How it works</a></li>
+            <li><a href="#" class="hover:underline focus:outline-none focus:underline">Testimonials</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="font-bold text-[14px] mb-4 text-[#0B3A21]">Company</h4>
+          <ul class="space-y-3 text-[12px] font-medium text-white">
+            <li><a href="about.html" class="hover:underline focus:outline-none focus:underline">About us</a></li>
+                                    <li><a href="contact.html" class="hover:underline focus:outline-none focus:underline">Contact</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="font-bold text-[14px] mb-4 text-[#0B3A21]">Support</h4>
+          <ul class="space-y-3 text-[12px] font-medium text-white">
+            <li><a href="#" class="hover:underline focus:outline-none focus:underline">Resources</a></li>
+            <li><a href="#" class="hover:underline focus:outline-none focus:underline">FAQs</a></li>
+            <li><a href="privacy.html" class="hover:underline focus:outline-none focus:underline">Privacy policy</a></li>
+            <li><a href="#" class="hover:underline focus:outline-none focus:underline">Terms of Service</a></li>
+          </ul>
+        </div>
+
+        <div class="lg:col-span-1">
+          <h4 class="font-bold text-[14px] mb-4 text-[#0B3A21]">News Letter Sign up</h4>
+          <form onsubmit="return false"
+            class="flex items-center bg-white rounded-full p-1 max-w-[250px] outline outline-0 focus-within:outline-2 focus-within:outline-white/50">
+            <input type="email" placeholder="Your email address" required
+              class="w-full px-3 py-1.5 text-[11px] outline-none text-gray-800 bg-transparent rounded-l-full placeholder:text-gray-400">
+            <button type="submit"
+              class="px-4 py-1.5 text-[11px] font-bold text-gray-900 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-green">
+              Signup
+            </button>
+          </form>
+        </div>
+
+      </div>
+
+      <div class="text-center text-[11px] font-medium text-white/80 border-t border-white/20 pt-6">
+        © 2026 SyntraAid. All Rights Reserved.
+      </div>
+    </div>
+  </footer>
+
+</body>
+
+</html>

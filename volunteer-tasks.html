@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Tasks - SyntraAid Volunteer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','system-ui','sans-serif']},colors:{brand:{green:'#2BB673',darkgreen:'#22A05B',lightgreen:'#F2FBF6'}}}}}</script>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');body{background:#f8f9fa;color:#111827;font-family:'Poppins',sans-serif}.tab.active{background:#2BB673;color:#fff}</style>
+</head>
+<body class="antialiased">
+  <div id="app"></div>
+  <script src="js/config.js"></script><script src="js/auth.js"></script>
+  <script src="js/api.js"></script><script src="js/layout.js"></script>
+  <script>
+    const content = `
+      <div class="flex gap-2 mb-5 flex-wrap">
+        <button data-f="all" class="tab active px-4 py-2 rounded-full text-[12px] font-[600] bg-white border border-gray-100">All</button>
+        <button data-f="not_started" class="tab px-4 py-2 rounded-full text-[12px] font-[600] bg-white border border-gray-100">Not Started</button>
+        <button data-f="in_progress" class="tab px-4 py-2 rounded-full text-[12px] font-[600] bg-white border border-gray-100">In Progress</button>
+        <button data-f="blocked" class="tab px-4 py-2 rounded-full text-[12px] font-[600] bg-white border border-gray-100">Blocked</button>
+        <button data-f="completed" class="tab px-4 py-2 rounded-full text-[12px] font-[600] bg-white border border-gray-100">Completed</button>
+      </div>
+      <div id="list" class="space-y-3"><p class="text-[13px] text-gray-400">Loading tasks...</p></div>
+    `;
+    Layout.render({ role:"volunteer", active:"tasks", title:"My Tasks", subtitle:"Tasks assigned to you.", content });
+
+    const user=window.Auth.getUser()||{};
+    const BADGE={not_started:'bg-gray-100 text-gray-500',in_progress:'bg-blue-50 text-blue-600',blocked:'bg-amber-50 text-amber-600',completed:'bg-[#E8F8F0] text-brand-green'};
+    let all=[],filter='all';
+    function render(){
+      const list=Layout.el('list');
+      let f=all.filter(t=>filter==='all'||t.status===filter);
+      if(!f.length){list.innerHTML='<p class="text-[13px] text-gray-400">No tasks here.</p>';return;}
+      list.innerHTML=f.map(t=>'<a href="volunteer-task-detail.html?id='+t._id+'" class="block bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><p class="text-[14px] font-[700] text-gray-900">'+Layout.esc(t.title)+'</p><p class="text-[12px] text-gray-500 mt-0.5">'+(t.dueDate?('Due '+new Date(t.dueDate).toLocaleDateString()):'No due date')+'</p></div><span class="text-[10px] px-2 py-0.5 rounded-full '+(BADGE[t.status]||'')+' capitalize shrink-0">'+(t.status||'').replace(/_/g,' ')+'</span></div></a>').join('');
+    }
+    (async function(){try{const res=await window.Api.get("/volunteers/"+user._id+"/tasks");all=res.data||[];render();}catch(e){Layout.el('list').innerHTML='<p class="text-[13px] text-red-500">'+Layout.esc(e.message)+'</p>';}})();
+    document.addEventListener('click',e=>{const b=e.target.closest('.tab');if(!b)return;document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');filter=b.dataset.f;render();});
+  </script>
+</body>
+</html>

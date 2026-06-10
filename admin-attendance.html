@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance - SyntraAid Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','system-ui','sans-serif']},colors:{brand:{green:'#2BB673',darkgreen:'#22A05B',lightgreen:'#F2FBF6'}}}}}</script>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');body{background:#f8f9fa;color:#111827;font-family:'Poppins',sans-serif}.fi{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:10px 14px;font-size:13px}.fi:focus{outline:none;border-color:#2BB673;box-shadow:0 0 0 3px rgba(43,182,115,.12)}</style>
+</head>
+<body class="antialiased">
+  <div id="app"></div>
+  <script src="js/config.js"></script><script src="js/auth.js"></script>
+  <script src="js/api.js"></script><script src="js/layout.js"></script>
+  <script>
+    const content = `
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
+        <input id="startDate" type="date" class="fi">
+        <input id="endDate" type="date" class="fi">
+        <button id="applyBtn" type="button" class="px-5 py-2.5 rounded-full bg-brand-green text-white text-[13px] font-[700] hover:bg-brand-darkgreen transition-colors">Apply</button>
+        <div class="sm:ml-auto flex gap-2">
+          <button id="csvBtn" type="button" class="px-4 py-2.5 rounded-full border border-gray-200 text-gray-700 text-[13px] font-[600] hover:bg-gray-50">Export CSV</button>
+          <button id="pdfBtn" type="button" class="px-4 py-2.5 rounded-full border border-gray-200 text-gray-700 text-[13px] font-[600] hover:bg-gray-50">Export PDF</button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+          <h2 class="text-[14px] font-[700] text-gray-900">Attendance Records</h2>
+          <span class="text-[12px] text-gray-500">Total: <span id="totalHours" class="font-[700] text-brand-green">0h</span></span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-[13px]">
+            <thead><tr class="text-left text-gray-400 border-b border-gray-100 bg-gray-50/50">
+              <th class="px-5 py-2.5 font-[600]">Date</th><th class="px-5 py-2.5 font-[600]">Volunteer</th>
+              <th class="px-5 py-2.5 font-[600]">Project</th><th class="px-5 py-2.5 font-[600]">Hours</th>
+              <th class="px-5 py-2.5 font-[600]">Notes</th>
+            </tr></thead>
+            <tbody id="rows"><tr><td colspan="5" class="px-5 py-4 text-gray-400">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <p class="text-[11px] text-gray-400 mt-3">Attendance is insert-only. Records cannot be edited or deleted; corrections are logged as new entries.</p>
+    `;
+    Layout.render({ role:"admin", active:"attendance", title:"Attendance", subtitle:"Organisation-wide attendance log.", content });
+
+    function qs(){
+      const s=Layout.el('startDate').value, e=Layout.el('endDate').value;
+      const p=[]; if(s)p.push('startDate='+s); if(e)p.push('endDate='+e);
+      return p.length?('?'+p.join('&')):'';
+    }
+    async function load(){
+      const rows=Layout.el('rows');
+      rows.innerHTML='<tr><td colspan="5" class="px-5 py-4 text-gray-400">Loading...</td></tr>';
+      try{
+        const res=await window.Api.get("/attendance"+qs());
+        const list=res.data||[];
+        Layout.el('totalHours').textContent=(res.totalHoursLogged||0)+'h';
+        if(!list.length){rows.innerHTML='<tr><td colspan="5" class="px-5 py-4 text-gray-400">No attendance records.</td></tr>';return;}
+        rows.innerHTML=list.map(a=>'<tr class="border-b border-gray-50">'+
+          '<td class="px-5 py-2.5">'+new Date(a.sessionDate).toLocaleDateString()+'</td>'+
+          '<td class="px-5 py-2.5 text-gray-500">'+Layout.esc(a.volunteerId)+'</td>'+
+          '<td class="px-5 py-2.5 text-gray-500">'+Layout.esc(a.projectId)+'</td>'+
+          '<td class="px-5 py-2.5 font-[600]">'+a.hoursLogged+'h</td>'+
+          '<td class="px-5 py-2.5 text-gray-500">'+Layout.esc(a.notes||'')+'</td></tr>'
+        ).join('');
+      }catch(e){rows.innerHTML='<tr><td colspan="5" class="px-5 py-4 text-red-500">'+Layout.esc(e.message)+'</td></tr>';}
+    }
+    load();
+    Layout.el('applyBtn').addEventListener('click', load);
+    // Export opens the backend export endpoint with the token (it streams a file)
+    function exportFile(fmt){
+      const s=Layout.el('startDate').value, e=Layout.el('endDate').value;
+      const p=['format='+fmt]; if(s)p.push('startDate='+s); if(e)p.push('endDate='+e);
+      const url=window.API_BASE+"/attendance/export?"+p.join('&');
+      // Note: this endpoint requires the Bearer token; for a quick test, fetch as blob
+      fetch(url,{headers:{Authorization:'Bearer '+window.Auth.getToken()}}).then(r=>r.blob()).then(b=>{
+        const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='attendance-export.'+fmt;a.click();
+      }).catch(()=>alert('Export failed. Is the backend running?'));
+    }
+    Layout.el('csvBtn').addEventListener('click', ()=>exportFile('csv'));
+    Layout.el('pdfBtn').addEventListener('click', ()=>exportFile('pdf'));
+  </script>
+</body>
+</html>

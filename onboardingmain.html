@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Onboarding - SyntraAid</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Poppins', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              green: '#2BB673',
+              darkgreen: '#22A05B',
+              lightgreen: '#F2FBF6',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+    body {
+      background-color: #fafbfa;
+      color: #111827;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+</head>
+
+<body class="antialiased min-h-screen flex items-center justify-center selection:bg-brand-green selection:text-white">
+
+  <main class="flex flex-col items-center justify-center text-center px-6 w-full max-w-3xl mx-auto">
+
+
+    <img src="./images/logo.png" alt="SyntraAid Logo" class="h-20 md:h-24 w-auto object-contain mb-3"
+      onerror="this.src='https://placehold.co/200x200/ffffff/2BB673?text=Logo'">
+
+
+    <h1 class="text-4xl md:text-[44px] font-[800] text-gray-900 tracking-tight leading-none mb-3">
+      Syntra<span class="text-brand-green">Aid</span>
+    </h1>
+
+
+    <p class="text-[17px] md:text-[22px] font-bold text-gray-900 tracking-wide">
+      - People. <span class="text-brand-green">Purpose.</span> Impact -
+    </p>
+
+  </main>
+
+  <script>
+    setTimeout(function () { window.location.href = 'onboarding-intro.html'; }, 2500);
+  </script>
+</body>
+
+</html>

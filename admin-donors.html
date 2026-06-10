@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donors - SyntraAid Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','system-ui','sans-serif']},colors:{brand:{green:'#2BB673',darkgreen:'#22A05B',lightgreen:'#F2FBF6'}}}}}</script>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');body{background:#f8f9fa;color:#111827;font-family:'Poppins',sans-serif}</style>
+</head>
+<body class="antialiased">
+  <div id="app"></div>
+  <script src="js/config.js"></script><script src="js/auth.js"></script>
+  <script src="js/api.js"></script><script src="js/layout.js"></script>
+  <script>
+    const content = `
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-5 py-3 border-b border-gray-100"><h2 class="text-[14px] font-[700]">Donors</h2></div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-[13px]">
+            <thead><tr class="text-left text-gray-400 border-b border-gray-100 bg-gray-50/50">
+              <th class="px-5 py-2.5 font-[600]">Email</th><th class="px-5 py-2.5 font-[600]">Status</th><th class="px-5 py-2.5 font-[600]">Linked Projects</th><th class="px-5 py-2.5 font-[600]"></th>
+            </tr></thead>
+            <tbody id="rows"><tr><td colspan="4" class="px-5 py-4 text-gray-400">Loading donors...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <p class="text-[11px] text-gray-400 mt-3">Visibility settings control what each donor can see per project. Donors never see volunteer personal contact details.</p>
+
+      <!-- Slide-over panel for visibility settings -->
+      <div id="panel" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/40" id="panelBg"></div>
+        <div class="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl p-6 overflow-y-auto">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-[16px] font-[700]" id="panelTitle">Donor</h3>
+            <button id="panelClose" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+          </div>
+          <div id="panelBody"><p class="text-[13px] text-gray-400">Loading...</p></div>
+        </div>
+      </div>
+    `;
+    Layout.render({ role:"admin", active:"donors", title:"Donor Management", subtitle:"Manage donors and their project visibility.", content });
+
+    let donors=[];
+    async function load(){
+      try{
+        const res=await window.Api.get("/donors");donors=res.data||[];
+        const rows=Layout.el('rows');
+        if(!donors.length){rows.innerHTML='<tr><td colspan="4" class="px-5 py-4 text-gray-400">No donors yet.</td></tr>';return;}
+        const enriched=await Promise.all(donors.map(async d=>{
+          let count=0; try{const r=await window.Api.get("/donors/"+d._id+"/projects");count=(r.data||[]).length;}catch(e){}
+          return {d,count};
+        }));
+        rows.innerHTML=enriched.map(({d,count})=>{
+          const st=d.isActive?'<span class="text-[11px] px-2 py-0.5 rounded-full bg-[#E8F8F0] text-brand-green">Active</span>':'<span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">Pending</span>';
+          return '<tr class="border-b border-gray-50"><td class="px-5 py-2.5">'+Layout.esc(d.email)+'</td><td class="px-5 py-2.5">'+st+'</td><td class="px-5 py-2.5">'+count+'</td><td class="px-5 py-2.5 text-right"><button class="text-[12px] text-brand-green font-[700] manage" data-id="'+d._id+'" data-email="'+Layout.esc(d.email)+'">Manage</button></td></tr>';
+        }).join('');
+      }catch(e){Layout.el('rows').innerHTML='<tr><td colspan="4" class="px-5 py-4 text-red-500">'+Layout.esc(e.message)+'</td></tr>';}
+    }
+    load();
+
+    const panel=Layout.el('panel');
+    function closePanel(){panel.classList.add('hidden');}
+    Layout.el('panelClose').addEventListener('click',closePanel);
+    Layout.el('panelBg').addEventListener('click',closePanel);
+
+    document.addEventListener('click', async (e)=>{
+      const btn=e.target.closest('.manage'); if(!btn)return;
+      const id=btn.dataset.id;
+      Layout.el('panelTitle').textContent=btn.dataset.email;
+      Layout.el('panelBody').innerHTML='<p class="text-[13px] text-gray-400">Loading linked projects...</p>';
+      panel.classList.remove('hidden');
+      try{
+        const r=await window.Api.get("/donors/"+id+"/projects");
+        const links=r.data||[];
+        if(!links.length){Layout.el('panelBody').innerHTML='<p class="text-[13px] text-gray-500">This donor is not linked to any projects yet.</p>';return;}
+        Layout.el('panelBody').innerHTML=links.map(l=>{
+          const v=l.visibilitySettings||{};
+          const row=(key,label)=>'<label class="flex items-center justify-between py-1.5 text-[13px]"><span class="text-gray-600">'+label+'</span><input type="checkbox" class="vis w-4 h-4 accent-[#2BB673]" data-link="'+l._id+'" data-project="'+l.projectId+'" data-key="'+key+'" '+(v[key]?'checked':'')+'></label>';
+          return '<div class="border border-gray-100 rounded-xl p-4 mb-3"><p class="text-[13px] font-[700] mb-2">Project: '+Layout.esc(l.projectId)+'</p>'+
+            row('showMilestoneProgress','Milestone progress')+row('showVolunteerCount','Volunteer count')+row('showAttendanceHours','Attendance hours')+row('showActivityFeed','Activity feed')+row('showProgramHealth','Program health')+'</div>';
+        }).join('');
+      }catch(e){Layout.el('panelBody').innerHTML='<p class="text-[13px] text-red-500">'+Layout.esc(e.message)+'</p>';}
+    });
+
+    // Save a visibility toggle on change
+    document.addEventListener('change', async (e)=>{
+      if(!e.target.classList.contains('vis'))return;
+      const box=e.target, donorId=Layout.el('panelTitle');
+      // collect all toggles for this link
+      const linkId=box.dataset.link, projectId=box.dataset.project;
+      const settings={};
+      document.querySelectorAll('.vis[data-link="'+linkId+'"]').forEach(cb=>{settings[cb.dataset.key]=cb.checked;});
+      // find donor id from the manage button currently active is not stored; re-derive from donors via projectId link
+      // Use the PUT visibility endpoint: /donors/:id/projects/:projectId
+      const donor=donors.find(d=>true); // we passed email as title; need id
+      // We stored id on the manage button; capture via a data attr on panel
+      const id=panel.dataset.donorId;
+      try{ await window.Api.put("/donors/"+id+"/projects/"+projectId,{visibilitySettings:settings}); }
+      catch(err){ alert('Could not save: '+err.message); }
+    });
+    // stash donor id when opening
+    document.addEventListener('click',(e)=>{const b=e.target.closest('.manage');if(b)panel.dataset.donorId=b.dataset.id;});
+  </script>
+</body>
+</html>

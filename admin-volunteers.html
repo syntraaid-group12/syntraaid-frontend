@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Volunteers - SyntraAid Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','system-ui','sans-serif']},colors:{brand:{green:'#2BB673',darkgreen:'#22A05B',lightgreen:'#F2FBF6'}}}}}</script>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');body{background:#f8f9fa;color:#111827;font-family:'Poppins',sans-serif}.fi{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:10px 14px;font-size:13px}.fi:focus{outline:none;border-color:#2BB673;box-shadow:0 0 0 3px rgba(43,182,115,.12)}</style>
+</head>
+<body class="antialiased">
+  <div id="app"></div>
+  <script src="js/config.js"></script><script src="js/auth.js"></script>
+  <script src="js/api.js"></script><script src="js/layout.js"></script>
+  <script>
+    const content = `
+      <div class="flex flex-col sm:flex-row gap-3 mb-5">
+        <div class="relative flex-1">
+          <span class="absolute inset-y-0 left-3 flex items-center text-gray-400"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></span>
+          <input id="search" type="search" placeholder="Search by name" class="fi w-full pl-10">
+        </div>
+        <input id="skill" type="text" placeholder="Filter by skill" class="fi">
+        <input id="day" type="text" placeholder="Availability day (e.g. MON)" class="fi">
+      </div>
+      <div id="grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"><p class="text-[13px] text-gray-400">Loading volunteers...</p></div>
+    `;
+    Layout.render({ role:"admin", active:"volunteers", title:"Volunteers", subtitle:"Search and manage volunteer profiles.", content });
+
+    let all=[];
+    function render(){
+      const q=(Layout.el('search').value||'').toLowerCase();
+      const sk=(Layout.el('skill').value||'').toLowerCase();
+      const dy=(Layout.el('day').value||'').toUpperCase();
+      let list=all.filter(v=>{
+        const name=((v.firstName||'')+' '+(v.lastName||'')).toLowerCase();
+        const skills=(v.skills||[]).map(s=>s.toLowerCase());
+        const days=(v.availabilityDays||[]).map(d=>String(d).toUpperCase());
+        return (!q||name.includes(q)) && (!sk||skills.some(s=>s.includes(sk))) && (!dy||days.some(d=>d.includes(dy)));
+      });
+      const grid=Layout.el('grid');
+      if(!list.length){grid.innerHTML='<p class="text-[13px] text-gray-400">No volunteers match.</p>';return;}
+      grid.innerHTML=list.map(v=>{
+        const skills=(v.skills||[]).slice(0,4).map(s=>'<span class="text-[10px] px-2 py-0.5 rounded-full bg-[#E8F8F0] text-brand-green">'+Layout.esc(s)+'</span>').join(' ');
+        const initials=((v.firstName||'?')[0]||'')+((v.lastName||'')[0]||'');
+        return '<a href="admin-volunteer-profile.html?id='+(v.userId||v._id)+'" class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 block hover:shadow-md transition-shadow">'+
+          '<div class="flex items-center gap-3"><div class="w-11 h-11 rounded-full bg-brand-green text-white flex items-center justify-center font-[700]">'+Layout.esc(initials.toUpperCase())+'</div>'+
+          '<div class="min-w-0"><p class="text-[14px] font-[700] text-gray-900 truncate">'+Layout.esc((v.firstName||'')+' '+(v.lastName||''))+'</p>'+
+          '<p class="text-[12px] text-gray-500">'+((v.availabilityDays||[]).join(', ')||'Availability not set')+'</p></div></div>'+
+          '<div class="flex flex-wrap gap-1.5 mt-3">'+(skills||'<span class="text-[11px] text-gray-400">No skills listed</span>')+'</div></a>';
+      }).join('');
+    }
+    (async function(){
+      try{ const res=await window.Api.get("/volunteers"); all=res.data||[]; render(); }
+      catch(e){ Layout.el('grid').innerHTML='<p class="text-[13px] text-red-500">'+Layout.esc(e.message)+'</p>'; }
+    })();
+    document.addEventListener('input',e=>{ if(['search','skill','day'].includes(e.target.id)) render(); });
+  </script>
+</body>
+</html>

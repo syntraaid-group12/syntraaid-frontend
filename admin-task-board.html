@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Board - SyntraAid Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','system-ui','sans-serif']},colors:{brand:{green:'#2BB673',darkgreen:'#22A05B',lightgreen:'#F2FBF6'}}}}}</script>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');body{background:#f8f9fa;color:#111827;font-family:'Poppins',sans-serif}</style>
+</head>
+<body class="antialiased">
+  <div id="app"></div>
+  <script src="js/config.js"></script><script src="js/auth.js"></script>
+  <script src="js/api.js"></script><script src="js/layout.js"></script>
+  <script>
+    const projectId=new URLSearchParams(location.search).get('project');
+    const content = `
+      <div class="mb-4 flex items-center gap-3">
+        <select id="projSelect" class="px-4 py-2.5 rounded-xl bg-white border border-gray-100 text-[13px]"><option value="">All projects</option></select>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div><div class="flex items-center gap-2 mb-3"><span class="w-2.5 h-2.5 rounded-full bg-gray-400"></span><h3 class="text-[13px] font-[700] text-gray-700">Not Started</h3></div><div id="col-not_started" class="space-y-2"></div></div>
+        <div><div class="flex items-center gap-2 mb-3"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span><h3 class="text-[13px] font-[700] text-gray-700">In Progress</h3></div><div id="col-in_progress" class="space-y-2"></div></div>
+        <div><div class="flex items-center gap-2 mb-3"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span><h3 class="text-[13px] font-[700] text-amber-600">Blocked</h3></div><div id="col-blocked" class="space-y-2 rounded-xl bg-amber-50/40 p-1 min-h-[40px]"></div></div>
+        <div><div class="flex items-center gap-2 mb-3"><span class="w-2.5 h-2.5 rounded-full bg-brand-green"></span><h3 class="text-[13px] font-[700] text-gray-700">Completed</h3></div><div id="col-completed" class="space-y-2"></div></div>
+      </div>
+    `;
+    Layout.render({ role:"admin", active:"projects", title:"Task Board", subtitle:"Track tasks across four stages.", content });
+
+    const COLS=['not_started','in_progress','blocked','completed'];
+    function card(t){
+      return '<div class="bg-white rounded-xl p-3 shadow-sm border border-gray-100"><p class="text-[13px] font-[600] text-gray-800 mb-2">'+Layout.esc(t.title)+'</p>'+
+        '<select data-id="'+t._id+'" class="status-sel w-full text-[11px] border border-gray-100 rounded-lg px-2 py-1 bg-gray-50">'+
+        COLS.map(s=>'<option value="'+s+'" '+(t.status===s?'selected':'')+'>'+s.replace(/_/g,' ')+'</option>').join('')+'</select></div>';
+    }
+    async function load(){
+      COLS.forEach(c=>Layout.el('col-'+c).innerHTML='');
+      const pid=Layout.el('projSelect').value;
+      try{
+        const res=await window.Api.get("/tasks"+(pid?("?projectId="+pid):""));
+        const tasks=res.data||[];
+        const buckets={not_started:[],in_progress:[],blocked:[],completed:[]};
+        tasks.forEach(t=>{(buckets[t.status]||buckets.not_started).push(t);});
+        COLS.forEach(c=>{Layout.el('col-'+c).innerHTML=buckets[c].map(card).join('')||'<p class="text-[12px] text-gray-300 px-1">None</p>';});
+      }catch(e){ COLS.forEach(c=>Layout.el('col-'+c).innerHTML='');Layout.el('col-not_started').innerHTML='<p class="text-[12px] text-red-500">'+Layout.esc(e.message)+'</p>'; }
+    }
+    (async function projs(){
+      try{const res=await window.Api.get("/projects");const sel=Layout.el('projSelect');(res.data||[]).forEach(p=>{const o=document.createElement('option');o.value=p._id;o.textContent=p.title;sel.appendChild(o);});if(projectId){sel.value=projectId;}}catch(e){}
+      load();
+    })();
+    Layout.el('projSelect').addEventListener('change', load);
+    document.addEventListener('change', async (e)=>{
+      if(!e.target.classList.contains('status-sel'))return;
+      const id=e.target.dataset.id, status=e.target.value;
+      try{ await window.Api.patch("/tasks/"+id+"/status",{status}); load(); }
+      catch(err){ alert('Could not update: '+err.message); load(); }
+    });
+  </script>
+</body>
+</html>

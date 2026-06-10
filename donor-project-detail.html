@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Detail - SyntraAid Donor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','system-ui','sans-serif']},colors:{brand:{green:'#2BB673',darkgreen:'#22A05B',lightgreen:'#F2FBF6'}}}}}</script>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');body{background:#f8f9fa;color:#111827;font-family:'Poppins',sans-serif}</style>
+</head>
+<body class="antialiased">
+  <div id="app"></div>
+  <script src="js/config.js"></script><script src="js/auth.js"></script>
+  <script src="js/api.js"></script><script src="js/layout.js"></script>
+  <script>
+    const pid=new URLSearchParams(location.search).get('id');
+    const content = `<div id="wrap"><p class="text-[13px] text-gray-400">Loading project...</p></div>`;
+    Layout.render({ role:"donor", active:"projects", title:"Project Detail", subtitle:"", content });
+    const user=window.Auth.getUser()||{};
+    const HEALTH={on_track:'bg-[#E8F8F0] text-brand-green',at_risk:'bg-amber-50 text-amber-600',needs_attention:'bg-red-50 text-red-500',completed:'bg-blue-50 text-blue-600'};
+    if(!pid){Layout.el('wrap').innerHTML='<p class="text-[13px] text-red-500">No project id.</p>';}
+    (async function(){
+      if(!pid)return;
+      try{
+        const res=await window.Api.get("/donors/"+user._id+"/projects/"+pid);
+        const d=res.data||{};const h=d.programHealthStatus||'on_track';
+        const ms=d.milestones||[];
+        let html='<div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-4"><div class="flex items-start justify-between gap-3"><h2 class="text-[18px] font-[800]">'+Layout.esc(d.title||'')+'</h2><span class="text-[11px] px-2.5 py-1 rounded-full '+(HEALTH[h]||'')+' capitalize shrink-0">'+h.replace(/_/g,' ')+'</span></div><p class="text-[13px] text-gray-600 mt-2">'+Layout.esc(d.description||'')+'</p>'+(d.goals?('<p class="text-[12px] text-gray-500 mt-2"><span class="font-[700]">Goals: </span>'+Layout.esc(d.goals)+'</p>'):'')+'</div>';
+        html+='<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">';
+        // participation summary cards (only what visibility allows)
+        html+='<div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100"><h3 class="text-[14px] font-[700] mb-3">Participation</h3>';
+        if(d.volunteerCount!=null) html+='<div class="flex justify-between text-[13px] py-1"><span class="text-gray-500">Volunteers</span><span class="font-[700]">'+d.volunteerCount+'</span></div>';
+        if(d.totalHoursLogged!=null) html+='<div class="flex justify-between text-[13px] py-1"><span class="text-gray-500">Hours logged</span><span class="font-[700]">'+d.totalHoursLogged+'h</span></div>';
+        if(d.volunteerCount==null&&d.totalHoursLogged==null) html+='<p class="text-[12px] text-gray-400">Participation details are not shared for this project.</p>';
+        html+='</div>';
+        // milestones
+        html+='<div class="lg:col-span-2 bg-white rounded-2xl p-5 shadow-sm border border-gray-100"><h3 class="text-[14px] font-[700] mb-3">Milestones</h3>';
+        html+=ms.length?('<div class="space-y-2">'+ms.map(m=>'<div class="flex items-center justify-between border border-gray-100 rounded-xl px-4 py-2.5"><span class="text-[13px] '+(m.isCompleted?'line-through text-gray-400':'text-gray-700')+'">'+Layout.esc(m.title)+'</span><span class="text-[11px] '+(m.isCompleted?'text-brand-green':'text-gray-400')+'">'+(m.isCompleted?'Completed':(m.dueDate?new Date(m.dueDate).toLocaleDateString():'-'))+'</span></div>').join('')+'</div>'):'<p class="text-[12px] text-gray-400">Milestone progress is not shared for this project.</p>';
+        html+='</div></div>';
+        // activity feed if shared
+        if(d.recentActivity&&d.recentActivity.length){
+          html+='<div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mt-4"><div class="flex items-center justify-between mb-3"><h3 class="text-[14px] font-[700]">Recent Activity</h3><a href="donor-project-history.html?id='+pid+'" class="text-[12px] text-brand-green font-[700]">Full history</a></div><div class="divide-y divide-gray-50">'+d.recentActivity.map(a=>'<div class="py-2.5"><p class="text-[13px] font-[600] capitalize">'+Layout.esc((a.activityType||'').replace(/_/g,' '))+'</p><p class="text-[12px] text-gray-500">'+Layout.esc(a.description||'')+'</p></div>').join('')+'</div></div>';
+        }
+        Layout.el('wrap').innerHTML=html;
+      }catch(e){Layout.el('wrap').innerHTML='<p class="text-[13px] text-red-500">'+Layout.esc(e.message)+'</p>';}
+    })();
+  </script>
+</body>
+</html>

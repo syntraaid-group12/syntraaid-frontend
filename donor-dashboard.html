@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donor Dashboard - SyntraAid</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Poppins','system-ui','sans-serif']},colors:{brand:{green:'#2BB673',darkgreen:'#22A05B',lightgreen:'#F2FBF6'}}}}}</script>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');body{background:#f8f9fa;color:#111827;font-family:'Poppins',sans-serif}::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:9999px}</style>
+</head>
+<body class="antialiased">
+  <div id="app"></div>
+  <script src="js/config.js"></script><script src="js/auth.js"></script>
+  <script src="js/api.js"></script><script src="js/layout.js"></script>
+  <script>
+    const content = `
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <p class="text-[11px] font-[600] text-gray-500 uppercase tracking-wide mb-2">Projects Funded</p>
+          <p class="text-[28px] font-[800]" id="k-projects">--</p>
+          <p class="text-[12px] text-gray-400 mt-1">Across your support</p>
+        </div>
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <p class="text-[11px] font-[600] text-gray-500 uppercase tracking-wide mb-2">Hours Contributed</p>
+          <p class="text-[28px] font-[800]" id="k-hours">--</p>
+          <p class="text-[12px] text-gray-400 mt-1">Volunteer hours on funded projects</p>
+        </div>
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <p class="text-[11px] font-[600] text-gray-500 uppercase tracking-wide mb-2">On Track</p>
+          <p class="text-[28px] font-[800]" id="k-ontrack">--</p>
+          <p class="text-[12px] text-gray-400 mt-1">Projects in good health</p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-[15px] font-[700]">My Impact</h2>
+          <a href="donor-funding-summary.html" class="text-[12px] text-brand-green font-[700]">Portfolio Summary</a>
+        </div>
+        <div id="impact" class="space-y-3"><p class="text-[13px] text-gray-400">Loading funded projects...</p></div>
+      </div>
+      <p class="text-[11px] text-gray-400 mt-3">You see progress, program health and contribution summaries. Volunteer personal details are never shown.</p>
+    `;
+    Layout.render({ role:"donor", active:"dashboard", title:"Donor Dashboard", subtitle:"Your funded projects and their impact.", content });
+
+    const user=window.Auth.getUser()||{};
+    const HEALTH={on_track:'bg-[#E8F8F0] text-brand-green',at_risk:'bg-amber-50 text-amber-600',needs_attention:'bg-red-50 text-red-500',completed:'bg-blue-50 text-blue-600'};
+
+    (async function(){
+      try{
+        const res=await window.Api.get("/donors/"+user._id+"/dashboard");
+        const projects=(res.data&&res.data.projects)||[];
+        Layout.el('k-projects').textContent=projects.length;
+        let hours=0,ontrack=0;
+        projects.forEach(p=>{ hours+=(p.totalHoursLogged||0); if(p.programHealthStatus==='on_track'||p.programHealthStatus==='completed')ontrack++; });
+        Layout.el('k-hours').textContent=hours+'h';
+        Layout.el('k-ontrack').textContent=ontrack+'/'+projects.length;
+
+        const box=Layout.el('impact');
+        if(!projects.length){box.innerHTML='<p class="text-[13px] text-gray-400">You are not linked to any projects yet.</p>';return;}
+        box.innerHTML=projects.map(p=>{
+          const h=p.programHealthStatus||'on_track';
+          const ms=p.milestones||[];
+          const done=ms.filter(m=>m.isCompleted).length;
+          const pct=ms.length?Math.round(done/ms.length*100):0;
+          const hoursLine=(p.totalHoursLogged!=null)?('<span>'+p.totalHoursLogged+'h contributed</span>'):'';
+          const volLine=(p.volunteerCount!=null)?('<span>'+p.volunteerCount+' volunteers</span>'):'';
+          return '<a href="donor-project-detail.html?id='+(p.projectId||p._id)+'" class="block border border-gray-100 rounded-xl p-4 hover:bg-gray-50">'+
+            '<div class="flex items-start justify-between gap-2"><p class="text-[14px] font-[700] text-gray-900">'+Layout.esc(p.title)+'</p>'+
+            '<span class="text-[10px] px-2 py-0.5 rounded-full '+(HEALTH[h]||'')+' capitalize shrink-0">'+h.replace(/_/g,' ')+'</span></div>'+
+            (ms.length?('<div class="mt-3"><div class="flex justify-between text-[11px] text-gray-500 mb-1"><span>Milestones</span><span>'+done+'/'+ms.length+'</span></div><div class="w-full bg-gray-100 rounded-full h-2"><div class="bg-brand-green h-2 rounded-full" style="width:'+pct+'%"></div></div></div>'):'')+
+            '<div class="flex gap-4 mt-3 text-[12px] text-gray-500">'+volLine+hoursLine+'</div></a>';
+        }).join('');
+      }catch(e){ Layout.el('impact').innerHTML='<p class="text-[13px] text-red-500">'+Layout.esc(e.message)+'</p>'; }
+    })();
+  </script>
+</body>
+</html>
