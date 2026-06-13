@@ -23,15 +23,16 @@
 
       <div class="absolute inset-0 rounded-br-[40px] rounded-tr-[40px] overflow-hidden">
         <img src="./images/side intro.jpg" alt="SyntraAid Onboarding" class="w-full h-full object-cover">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
       </div>
 
-      <div class="absolute bottom-12 left-8 md:left-10 z-10 max-w-[90%] md:max-w-[420px] pr-4">
-        <h1 class="text-black text-[36px] md:text-[44px] font-[900] leading-[1.1] mb-4">
+      <div class="absolute bottom-12 left-8 md:left-10 z-10 max-w-[90%] md:max-w-[420px] pr-4 drop-shadow-lg">
+        <h1 class="text-white text-[36px] md:text-[44px] font-[900] leading-[1.1] mb-4">
           Syntra<span class="text-[#2BB673]">Aid</span> Manage Impact.<br>Inspire Change.
         </h1>
-        <p class="text-black text-[14px] md:text-[15px] font-[700] leading-snug">
+        <p class="text-white/90 text-[14px] md:text-[15px] font-[700] leading-snug">
           Coordinate volunteers, oversee projects, track contributions, and support
-          transparent community impact — all in one platform.
+          transparent community impact, all in one platform.
         </p>
       </div>
 
@@ -252,6 +253,33 @@
       });
     })();
   </script>
+  <script>
+  (function () {
+    var EYE = '<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>';
+    var EYE_OFF = '<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.066 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l12.544 12.544"/></svg>';
+    function wire(input) {
+      var box = input.closest('.relative') || input.parentElement;
+      if (!box) return;
+      var toggle = box.querySelector('span.cursor-pointer') || box.querySelector('[data-pw-toggle]');
+      if (!toggle) {
+        toggle = document.createElement('span');
+        toggle.className = 'absolute inset-y-0 right-4 flex items-center text-gray-400 cursor-pointer hover:text-gray-600 transition-colors';
+        toggle.setAttribute('data-pw-toggle', '');
+        box.appendChild(toggle);
+      }
+      if (!toggle.innerHTML.trim()) toggle.innerHTML = EYE;
+      toggle.setAttribute('role', 'button');
+      toggle.setAttribute('aria-label', 'Show password');
+      toggle.addEventListener('click', function () {
+        var hidden = input.type === 'password';
+        input.type = hidden ? 'text' : 'password';
+        toggle.innerHTML = hidden ? EYE_OFF : EYE;
+        toggle.setAttribute('aria-label', hidden ? 'Hide password' : 'Show password');
+      });
+    }
+    document.querySelectorAll('input[type="password"]').forEach(wire);
+  })();
+</script>
 </body>
 
 </html>
